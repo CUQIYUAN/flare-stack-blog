@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 const DYNAMIC_IMPORT_RE = /import\(\s*["']\.\/([^"']+\.js)["']\s*\)/g;
+const STATIC_IMPORT_RE = /(?:from|import)\s*["'](\.{1,2}\/[^"']+\.js)["']/g;
 const WORKER_ENTRY_RE = /^worker-entry-[^/]+\.js$/;
 
 export type SsrChunkBackEdge = {
@@ -42,16 +43,20 @@ export function findSsrEntryBackEdges(dir: string): SsrChunkBackEdge[] {
   }
 
   const backEdges: SsrChunkBackEdge[] = [];
-  const fromPattern = new RegExp(
-    `from\\s+["']\\./${workerEntry.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']`,
-  );
+  const entryPath = path.resolve(entryDir, workerEntry);
   for (const specifier of imported) {
     const importedPath = path.join(entryDir, specifier);
     // A real dynamic import always has an emitted chunk. Matches without one
     // come from text such as JSDoc `import("./x.js")` types kept in the bundle.
     if (!existsSync(importedPath)) continue;
     const importedSource = readFileSync(importedPath, "utf8");
-    if (fromPattern.test(importedSource)) {
+    // Resolve each static import against the chunk's own directory, so a chunk
+    // in assets/ that imports "../index.js" is recognised as a back edge.
+    const importsEntry = [...importedSource.matchAll(STATIC_IMPORT_RE)].some(
+      (match) =>
+        path.resolve(path.dirname(importedPath), match[1] ?? "") === entryPath,
+    );
+    if (importsEntry) {
       backEdges.push({ from: specifier, to: workerEntry });
     }
   }

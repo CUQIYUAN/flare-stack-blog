@@ -81,4 +81,19 @@ describe("findSsrEntryBackEdges", () => {
       { from: "router-xyz.js", to: "worker-entry-abc.js" },
     ]);
   });
+
+  it("reports a chunk in a subdirectory that imports the entry through ../", () => {
+    const dir = writeAssets({
+      "index.js": `
+        async function loadEntries() {
+          await import("./assets/router-xyz.js");
+        }
+      `,
+      "assets/router-xyz.js": `import { g } from "../index.js";`,
+    });
+
+    expect(findSsrEntryBackEdges(dir)).toEqual([
+      { from: "assets/router-xyz.js", to: "index.js" },
+    ]);
+  });
 });

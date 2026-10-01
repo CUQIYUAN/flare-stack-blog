@@ -38,9 +38,9 @@ const config = defineConfig({
         ],
       },
       build: {
-        rollupOptions: {
+        rolldownOptions: {
           output: {
-            inlineDynamicImports: true,
+            codeSplitting: false,
           },
         },
       },
