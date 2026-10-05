@@ -10,7 +10,11 @@ import {
   type CSSProperties,
 } from "react";
 import { createPortal } from "react-dom";
-import { POPOVER_PANEL_CLASS } from "@/components/ui/use-anchored-popover";
+import { ListboxOption } from "@/components/ui/listbox-option";
+import {
+  POPOVER_PANEL_CLASS,
+  popoverMotionOrigin,
+} from "@/components/ui/use-anchored-popover";
 import { MOTION, useMotionPresence } from "@/hooks/use-motion";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
@@ -57,14 +61,12 @@ export function SlashMenuView({ editor }: { editor: Editor | null }) {
     if (!mount || !panel) return;
     return mount(panel, {
       onPosition: ({ x, y, strategy, placement }) => {
-        const above = placement.startsWith("top");
         setPosition({
           position: strategy,
           left: x,
           top: y,
-          transformOrigin: above ? "bottom left" : "top left",
-          "--popover-offset": above ? "4px" : "-4px",
-        } as CSSProperties);
+          ...popoverMotionOrigin(placement.startsWith("top"), "left"),
+        });
       },
     });
   }, [mount, present]);
@@ -109,21 +111,13 @@ export function SlashMenuView({ editor }: { editor: Editor | null }) {
         const Icon = item.icon;
         const isActive = index === activeIndex;
         return (
-          <div
+          <ListboxOption
             key={item.id}
             id={optionId(index)}
-            role="option"
-            aria-selected={isActive}
-            // Keep focus and the selection in the editor while clicking.
-            onMouseDown={(event) => event.preventDefault()}
-            onMouseMove={() => highlightSlashMenuItem(editor, index)}
-            onClick={() => pickSlashMenuItem(editor, index)}
-            className={cn(
-              "flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 text-sm transition-colors",
-              isActive
-                ? "bg-(--fuwari-btn-regular-bg) fuwari-text-90"
-                : "fuwari-text-75",
-            )}
+            active={isActive}
+            onActivate={() => highlightSlashMenuItem(editor, index)}
+            onPick={() => pickSlashMenuItem(editor, index)}
+            className="gap-3 px-2"
           >
             <span
               aria-hidden="true"
@@ -135,7 +129,7 @@ export function SlashMenuView({ editor }: { editor: Editor | null }) {
               <Icon size={14} />
             </span>
             <span className="truncate">{item.title()}</span>
-          </div>
+          </ListboxOption>
         );
       })}
     </div>,

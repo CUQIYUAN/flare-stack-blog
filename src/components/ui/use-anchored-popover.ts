@@ -18,6 +18,20 @@ export const POPOVER_PANEL_CLASS =
 const GAP = 4;
 
 /**
+ * Where a popover's open and close motion grows from: the anchor-side corner
+ * on `edge`, for a popover placed `above` or below its anchor.
+ */
+export function popoverMotionOrigin(
+  above: boolean,
+  edge: "left" | "right",
+): CSSProperties {
+  return {
+    transformOrigin: `${above ? "bottom" : "top"} ${edge}`,
+    "--popover-offset": above ? "4px" : "-4px",
+  } as CSSProperties;
+}
+
+/**
  * Anchors a fixed-position popover to its trigger's right edge, below it, or
  * above it when there is less than `maxHeight` room below and more above. The
  * popover follows the trigger on resize and scroll, and `onDismiss` runs on a
@@ -60,9 +74,8 @@ export function useAnchoredPopover({
         width,
         top: openUp ? undefined : rect.bottom + GAP,
         bottom: openUp ? window.innerHeight - rect.top + GAP : undefined,
-        transformOrigin: openUp ? "bottom right" : "top right",
-        "--popover-offset": openUp ? "4px" : "-4px",
-      } as CSSProperties);
+        ...popoverMotionOrigin(openUp, "right"),
+      });
     };
 
     // Scrolling inside the popover does not move the trigger.

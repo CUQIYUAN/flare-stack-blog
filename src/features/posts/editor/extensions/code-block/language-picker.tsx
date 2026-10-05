@@ -8,6 +8,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { createPortal } from "react-dom";
+import { ListboxOption } from "@/components/ui/listbox-option";
 import {
   POPOVER_PANEL_CLASS,
   POPOVER_TRIGGER_CLASS,
@@ -218,24 +219,14 @@ export function LanguagePicker({
                   const isActive = index === activeIndex;
                   const isCurrent = option.id === currentId;
                   return (
-                    <div
+                    <ListboxOption
                       key={option.id}
                       id={optionId(option.id)}
-                      role="option"
-                      aria-selected={isActive}
-                      // Keep focus in the search box while clicking.
-                      onMouseDown={(event) => event.preventDefault()}
-                      onMouseMove={() => setActiveIndex(index)}
-                      onClick={() => pick(option)}
-                      className={cn(
-                        "flex cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors",
-                        isActive && "bg-(--fuwari-btn-regular-bg)",
-                        isCurrent
-                          ? "text-(--fuwari-primary)"
-                          : isActive
-                            ? "fuwari-text-90"
-                            : "fuwari-text-75",
-                      )}
+                      active={isActive}
+                      current={isCurrent}
+                      onActivate={() => setActiveIndex(index)}
+                      onPick={() => pick(option)}
+                      className="justify-between gap-2 px-3"
                     >
                       <span className="truncate">{option.label}</span>
                       {isCurrent ? (
@@ -246,7 +237,7 @@ export function LanguagePicker({
                           className="shrink-0"
                         />
                       ) : null}
-                    </div>
+                    </ListboxOption>
                   );
                 })}
               </div>
