@@ -1,14 +1,18 @@
 /**
  * Signs a throwaway Admin into the local dev server, then removes it again.
  *
- *   bun scripts/dev-admin-session.ts seed     # prints the session cookie value
- *   bun scripts/dev-admin-session.ts cleanup  # deletes the Admin, its session and new Posts
+ *   bun scripts/dev-admin-session.ts seed           # prints the session cookie value
+ *   bun scripts/dev-admin-session.ts cleanup        # lists what cleanup would delete
+ *   bun scripts/dev-admin-session.ts cleanup --yes  # deletes the Admin, its session and those Posts
+ *   bun scripts/dev-admin-session.ts cleanup --yes --keep 12,13  # spares Posts 12 and 13
  *
  * Sign-up needs a Turnstile token, so `seed` writes the user and session rows
  * straight into the local D1 file and signs the cookie with BETTER_AUTH_SECRET
  * from `.dev.vars`, the way better-auth does. The local database is often a
- * copy of production data: `cleanup` removes only the throwaway Admin and the
- * Posts created after `seed` (every row whose `post_id` points at them).
+ * copy of production data, and nothing records who created a Post: cleanup
+ * can only offer the Posts created since `seed`, which may include someone
+ * else's. It lists them first and deletes only with `--yes`, together with
+ * every row whose `post_id` points at them.
  */
 import { Database } from "bun:sqlite";
 import {
@@ -30,6 +34,8 @@ interface SeedState {
   database: string;
   sessionId: string;
   lastPostId: number;
+  /** Unix seconds, the unit of `posts.created_at`. */
+  seededAt: number;
 }
 
 function findDatabase() {
@@ -107,12 +113,17 @@ async function seed() {
 
   writeFileSync(
     STATE_FILE,
-    JSON.stringify({ database, sessionId, lastPostId } satisfies SeedState),
+    JSON.stringify({
+      database,
+      sessionId,
+      lastPostId,
+      seededAt: Math.floor(now / 1000),
+    } satisfies SeedState),
   );
   console.log(await signCookieValue(token, authSecret()));
 }
 
-function cleanup() {
+function cleanup(confirmed: boolean, keep: ReadonlySet<number>) {
   if (!existsSync(STATE_FILE)) {
     console.log("Nothing to clean up.");
     return;
@@ -121,6 +132,36 @@ function cleanup() {
   const db = new Database(state.database);
   db.run("pragma foreign_keys = on");
 
+  const posts = db
+    .query(
+      "select id, title, status, created_at from posts where id > ? and created_at >= ? order by id",
+    )
+    .all(state.lastPostId, state.seededAt ?? 0) as Array<{
+    id: number;
+    title: string;
+    status: string;
+    created_at: number;
+  }>;
+  const doomed = posts.filter((post) => !keep.has(post.id));
+
+  if (!confirmed) {
+    console.log("Posts created since seed (cleanup --yes deletes them):");
+    for (const post of doomed) {
+      const created = new Date(post.created_at * 1000).toISOString();
+      console.log(
+        `  #${post.id} ${post.status} ${created} ${JSON.stringify(post.title)}`,
+      );
+    }
+    if (doomed.length === 0) console.log("  (none)");
+    console.log(
+      "Check these are all yours, then run cleanup --yes (add --keep <id,id> to spare any).",
+    );
+    db.close();
+    process.exit(2);
+  }
+
+  const ids = doomed.map((post) => post.id);
+  const marks = ids.map(() => "?").join(", ");
   const tables = (
     db
       .query("select name from sqlite_master where type = 'table'")
@@ -129,25 +170,28 @@ function cleanup() {
   const removed: Record<string, number> = {};
 
   db.transaction(() => {
-    for (const table of tables) {
-      const columns = db.query(`pragma table_info("${table}")`).all() as Array<{
-        name: string;
-      }>;
-      if (!columns.some((column) => column.name === "post_id")) continue;
-      const count = (
-        db
-          .query(`select count(*) as n from "${table}" where post_id > ?`)
-          .get(state.lastPostId) as {
-          n: number;
-        }
-      ).n;
-      if (count === 0) continue;
-      db.run(`delete from "${table}" where post_id > ?`, [state.lastPostId]);
-      removed[table] = count;
+    if (ids.length > 0) {
+      for (const table of tables) {
+        const columns = db
+          .query(`pragma table_info("${table}")`)
+          .all() as Array<{ name: string }>;
+        if (!columns.some((column) => column.name === "post_id")) continue;
+        const count = (
+          db
+            .query(
+              `select count(*) as n from "${table}" where post_id in (${marks})`,
+            )
+            .get(...ids) as { n: number }
+        ).n;
+        if (count === 0) continue;
+        db.run(`delete from "${table}" where post_id in (${marks})`, ids);
+        removed[table] = count;
+      }
+      removed.posts = db.run(
+        `delete from posts where id in (${marks})`,
+        ids,
+      ).changes;
     }
-    removed.posts = db.run("delete from posts where id > ?", [
-      state.lastPostId,
-    ]).changes;
     removed.session = db.run("delete from session where user_id = ?", [
       USER_ID,
     ]).changes;
@@ -161,8 +205,15 @@ function cleanup() {
 
 const command = process.argv[2];
 if (command === "seed") await seed();
-else if (command === "cleanup") cleanup();
-else {
-  console.error("Usage: bun scripts/dev-admin-session.ts <seed|cleanup>");
+else if (command === "cleanup") {
+  const keepArg = process.argv[process.argv.indexOf("--keep") + 1];
+  const keep = process.argv.includes("--keep")
+    ? new Set((keepArg ?? "").split(",").map(Number).filter(Number.isInteger))
+    : new Set<number>();
+  cleanup(process.argv.includes("--yes"), keep);
+} else {
+  console.error(
+    "Usage: bun scripts/dev-admin-session.ts <seed|cleanup [--yes]>",
+  );
   process.exit(1);
 }

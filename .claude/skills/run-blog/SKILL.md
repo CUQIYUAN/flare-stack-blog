@@ -41,7 +41,8 @@ Look at every screenshot, and record `pageerror` events.
 
 ```bash
 lsof -ti:3000 -sTCP:LISTEN | xargs -r kill
-bun scripts/dev-admin-session.ts cleanup
+bun scripts/dev-admin-session.ts cleanup         # lists the Posts created since seed
+bun scripts/dev-admin-session.ts cleanup --yes   # deletes them, the Admin and its session
 ```
 
-Cleanup deletes the throwaway Admin, its session, and every Post created after `seed` together with rows that reference them (revisions, search documents). Posts someone else created locally in the meantime go too.
+Nothing records who created a Post, so the list can include Posts someone else made locally while you worked. Compare it with the Posts your own run created (note each `/admin/posts/edit/<id>` you open). If anything else is listed, spare it with `cleanup --yes --keep <id,id>` and tell the user.
