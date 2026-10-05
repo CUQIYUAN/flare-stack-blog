@@ -57,7 +57,7 @@ describe("post editor tables", () => {
     const { table, widths } = shownTable(editor);
     expect(widths).toEqual(["16.667%", "33.333%", "50%"]);
     expect(table.hasAttribute("data-column-widths")).toBe(true);
-    expect(table.style.minWidth).toBe("min(30rem, 600px)");
+    expect(table.style.minWidth).toBe("min(30rem, 400px)");
   });
 
   it("lets the Admin drag column widths while editing", () => {

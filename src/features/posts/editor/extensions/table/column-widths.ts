@@ -11,14 +11,23 @@ export interface TableColumnLayout {
   widths: Array<string>;
   /**
    * CSS min-width of the table: enough for the narrowest column to get
-   * `MIN_COLUMN_REM`, but never more than the stored pixel layout. Below it
-   * the table scrolls sideways instead of squeezing columns.
+   * `MIN_COLUMN_REM`, but never more than `MAX_MIN_WIDTH_SHARE` of the stored
+   * pixel layout. Below it the table scrolls sideways instead of squeezing
+   * columns.
    */
   minWidth: string;
 }
 
 /** The width the narrowest column keeps on narrow screens. */
 export const MIN_COLUMN_REM = 5;
+
+/**
+ * The most of its stored layout a table may insist on. Tables are laid out in
+ * the editor, which is wider than the published article; a column dragged to
+ * the minimum would otherwise make the table demand its whole editor width and
+ * scroll on desktop.
+ */
+export const MAX_MIN_WIDTH_SHARE = 2 / 3;
 
 /** The layout for a table, or `null` when no column has a stored width. */
 export function tableColumnLayout(
@@ -35,7 +44,7 @@ export function tableColumnLayout(
   const narrowest = Math.min(...resolved) / total;
   return {
     widths: resolved.map((width) => percent(width / total)),
-    minWidth: `min(${round(MIN_COLUMN_REM / narrowest)}rem, ${round(total)}px)`,
+    minWidth: `min(${round(MIN_COLUMN_REM / narrowest)}rem, ${round(total * MAX_MIN_WIDTH_SHARE)}px)`,
   };
 }
 

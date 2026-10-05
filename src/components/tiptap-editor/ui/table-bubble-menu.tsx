@@ -13,10 +13,11 @@ import {
   Trash2,
 } from "lucide-react";
 import type React from "react";
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { MOTION, useMotionPresence } from "@/hooks/use-motion";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
+import { tableMenuPosition } from "./table-menu-position";
 
 interface TableBubbleMenuProps {
   editor: Editor | null;
@@ -163,7 +164,7 @@ function selectionInTable(editor: Editor): boolean {
   return false;
 }
 
-function cellRect(editor: Editor): DOMRect | null {
+function activeCell(editor: Editor): Element | null {
   const { selection } = editor.state;
   let cellPos: number | null = null;
 
@@ -182,8 +183,7 @@ function cellRect(editor: Editor): DOMRect | null {
 
   if (cellPos == null) return null;
   const dom = editor.view.nodeDOM(cellPos);
-  if (!(dom instanceof Element)) return null;
-  return dom.getBoundingClientRect();
+  return dom instanceof Element ? dom : null;
 }
 
 function useTableSelection(editor: Editor | null) {
@@ -209,6 +209,7 @@ export const TableBubbleMenu: React.FC<TableBubbleMenuProps> = ({ editor }) => {
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(
     null,
   );
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (!editor) {
@@ -217,26 +218,35 @@ export const TableBubbleMenu: React.FC<TableBubbleMenuProps> = ({ editor }) => {
     }
     if (!active) return;
 
+    const scroller = document.getElementById("post-editor-scroll-container");
     const place = () => {
-      const rect = cellRect(editor);
-      if (!rect) {
+      const cell = activeCell(editor);
+      const table = cell?.closest("table");
+      if (!cell || !table) {
         setCoords(null);
         return;
       }
-      setCoords({
-        top: rect.top,
-        left: rect.left + rect.width / 2,
-      });
+      setCoords(
+        tableMenuPosition({
+          table: table.getBoundingClientRect(),
+          cell: cell.getBoundingClientRect(),
+          menuWidth: menuRef.current?.offsetWidth ?? 0,
+          viewportWidth: window.innerWidth,
+          visibleTop: scroller?.getBoundingClientRect().top ?? 0,
+        }),
+      );
     };
 
     place();
-    const scroller = document.getElementById("post-editor-scroll-container");
+    // The menu's width is known only once it has rendered.
+    const frame = requestAnimationFrame(place);
     scroller?.addEventListener("scroll", place, { passive: true });
     window.addEventListener("resize", place);
     window.addEventListener("scroll", place, true);
     // Dragging a column border moves the cell without moving the selection.
     editor.on("update", place);
     return () => {
+      cancelAnimationFrame(frame);
       editor.off("update", place);
       scroller?.removeEventListener("scroll", place);
       window.removeEventListener("resize", place);
@@ -253,10 +263,11 @@ export const TableBubbleMenu: React.FC<TableBubbleMenuProps> = ({ editor }) => {
       style={{
         top: coords.top,
         left: coords.left,
-        transform: "translate(-50%, calc(-100% - 8px))",
+        transform: "translateY(calc(-100% - 8px))",
       }}
     >
       <div
+        ref={menuRef}
         data-state={active ? "open" : "closing"}
         inert={!active}
         className="fuwari-popover-motion pointer-events-auto flex items-center gap-0.5 rounded-xl bg-(--fuwari-card-bg) p-1 shadow-md ring-1 ring-(--fuwari-input-border)"

@@ -67,7 +67,7 @@ describe("renderReact tables", () => {
     expect(colWidths(html)).toEqual(["16.667%", "33.333%", "50%"]);
   });
 
-  it("keeps the narrowest column at least 5rem wide, or as laid out", () => {
+  it("keeps the narrowest column at least 5rem wide, within two thirds of the layout", () => {
     const even = render(
       table([[cell("tableCell", "A", [100]), cell("tableCell", "B", [300])]]),
     );
@@ -75,9 +75,10 @@ describe("renderReact tables", () => {
       table([[cell("tableCell", "A", [50]), cell("tableCell", "B", [950])]]),
     );
 
-    // 5rem / 25% = 20rem; the table never needs more than its 400px layout.
-    expect(even).toContain("min-width:min(20rem, 400px)");
-    expect(skewed).toContain("min-width:min(100rem, 1000px)");
+    // 5rem / 25% = 20rem; the table never needs more than two thirds of its
+    // layout, so a table laid out in the wider editor fits the article.
+    expect(even).toContain("min-width:min(20rem, 266.667px)");
+    expect(skewed).toContain("min-width:min(100rem, 666.667px)");
   });
 
   it("reads one stored width per column a merged cell spans", () => {
