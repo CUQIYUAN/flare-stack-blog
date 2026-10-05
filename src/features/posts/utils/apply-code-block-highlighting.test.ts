@@ -11,7 +11,7 @@ const SHIKI_PRE =
   '<pre class="shiki shiki-themes vitesse-light vitesse-dark" style="background-color:#ffffff;--shiki-dark-bg:#18181b;color:#393a34;--shiki-dark:#dbd7caee" tabindex="0">';
 const SHIKI_PLAIN_TEXT = `${SHIKI_PRE}<code><span class="line"><span>const answer = 42;</span></span></code></pre>`;
 const SHIKI_TYPESCRIPT = `${SHIKI_PRE}<code><span class="line"><span style="color:#AB5959;--shiki-dark:#CB7676">const</span><span style="color:#B07D48;--shiki-dark:#BD976A"> answer</span><span style="color:#999999;--shiki-dark:#666666"> =</span><span style="color:#2F798A;--shiki-dark:#4C9A91"> 42</span><span style="color:#999999;--shiki-dark:#666666">;</span></span></code></pre>`;
-// What publishing stores when highlighting throws (`fallbackCodeHtml`).
+// What publishing stores when highlighting throws (`plainCodeHtml`).
 const ERROR_FALLBACK = "<pre><code>const answer = 42;</code></pre>";
 
 function codeDoc(

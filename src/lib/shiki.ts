@@ -3,7 +3,8 @@ import { createHighlighterCore } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import viteDark from "shiki/themes/vitesse-dark.mjs";
 import viteLight from "shiki/themes/vitesse-light.mjs";
-import { resolveCodeLanguage } from "@/lib/code-languages";
+import { PLAIN_TEXT, resolveCodeLanguage } from "@/lib/code-languages";
+import { plainCodeHtml } from "@/lib/plain-code-html";
 
 const themes = {
   light: "vitesse-light",
@@ -43,16 +44,8 @@ async function loadLanguage(lang: string) {
   return language.id;
 }
 
-function fallbackHighlightedCode(code: string) {
-  return `<pre><code>${code
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")}</code></pre>`;
-}
-
 export async function highlight(code: string, lang: string) {
-  const safeLang = (await loadLanguage(lang)) ?? "text";
+  const safeLang = (await loadLanguage(lang)) ?? PLAIN_TEXT;
   const highlighter = await getHighlighter();
 
   try {
@@ -65,6 +58,6 @@ export async function highlight(code: string, lang: string) {
     });
   } catch (e) {
     console.warn(`Failed to highlight language: ${lang}`, e);
-    return fallbackHighlightedCode(code);
+    return plainCodeHtml(code);
   }
 }

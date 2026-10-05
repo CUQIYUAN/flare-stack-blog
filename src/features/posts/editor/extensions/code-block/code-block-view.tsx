@@ -10,6 +10,7 @@ import {
   type MouseEvent,
 } from "react";
 import { codeBlockHighlightKey } from "@/features/posts/utils/apply-code-block-highlighting";
+import { PLAIN_TEXT } from "@/lib/code-languages";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import { CodeBlockHighlightContext } from "./code-block-highlight-context";
@@ -59,7 +60,7 @@ export function CodeBlockView({
   const [computedHtml, setComputedHtml] = useState<string | undefined>();
   const [computedKey, setComputedKey] = useState<string | null>(null);
 
-  const language = node.attrs.language || "text";
+  const language = node.attrs.language || PLAIN_TEXT;
   const code = node.textContent;
   const editing = selectionIsInCodeBlock(editor, getPos);
   const resolvedHtml = resolveEditorCodeHighlightHtml(

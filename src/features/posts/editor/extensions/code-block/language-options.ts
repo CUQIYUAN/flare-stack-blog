@@ -1,8 +1,7 @@
-export interface LanguageOption {
-  id: string;
-  label: string;
-  aliases: ReadonlyArray<string>;
-}
+import type { CodeLanguage } from "@/lib/code-languages";
+
+/** A picker entry: a registry language, or plain text, which has no grammar. */
+export type LanguageOption = Pick<CodeLanguage, "id" | "label" | "aliases">;
 
 const NO_MATCH = 3;
 

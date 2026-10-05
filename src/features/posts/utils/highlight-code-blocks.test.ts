@@ -1,7 +1,7 @@
 import type { JSONContent } from "@tiptap/react";
 import { describe, expect, it } from "vitest";
-import { fallbackCodeHtml } from "@/features/posts/utils/content";
 import { CODE_LANGUAGES } from "@/lib/code-languages";
+import { plainCodeHtml } from "@/lib/plain-code-html";
 import { highlightSnapshotContent } from "./highlight-code-blocks";
 
 // One snippet per supported language; each must contain several token kinds.
@@ -169,13 +169,13 @@ describe("highlightSnapshotContent", () => {
     });
 
     it("re-highlights the error fallback once the language resolves to a grammar", async () => {
-      const html = await republish("typescript", fallbackCodeHtml(code));
+      const html = await republish("typescript", plainCodeHtml(code));
 
       expect(html).toBe(await highlightBlock("typescript", code));
     });
 
     it("keeps it while the language still has no grammar", async () => {
-      const plain = fallbackCodeHtml(code);
+      const plain = plainCodeHtml(code);
 
       expect(await republish("not-a-language", plain)).toBe(plain);
       expect(await republish("text", plain)).toBe(plain);

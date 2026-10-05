@@ -1,6 +1,7 @@
 import { Check, ChevronDown, Copy } from "lucide-react";
 import { memo, useLayoutEffect, useRef, useState } from "react";
-import { resolveCodeLanguage } from "@/lib/code-languages";
+import { isPlainTextLanguage, resolveCodeLanguage } from "@/lib/code-languages";
+import { escapeCodeHtml } from "@/lib/plain-code-html";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 
@@ -14,11 +15,7 @@ const FOLD_THRESHOLD = 400;
 
 export const CodeBlock = memo(
   ({ code, language, highlightedHtml }: CodeBlockProps) => {
-    const fallback = `<pre class="shiki font-mono text-sm leading-relaxed whitespace-pre text-(--fuwari-btn-content) bg-transparent! p-0 m-0 border-0"><code>${code
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")}</code></pre>`;
+    const fallback = `<pre class="shiki font-mono text-sm leading-relaxed whitespace-pre text-(--fuwari-btn-content) bg-transparent! p-0 m-0 border-0"><code>${escapeCodeHtml(code)}</code></pre>`;
     const html = highlightedHtml || fallback;
 
     const [copied, setCopied] = useState(false);
@@ -39,12 +36,9 @@ export const CodeBlock = memo(
     }, [html]);
 
     // Helper to get display label (following expressive-code language badge logic)
-    const normalizedLanguage = language?.toLowerCase();
-    const displayLanguage = normalizedLanguage
-      ? normalizedLanguage === "text" || normalizedLanguage === "txt"
-        ? m.common_plain_text()
-        : (resolveCodeLanguage(normalizedLanguage)?.label ?? normalizedLanguage)
-      : m.common_plain_text();
+    const displayLanguage = isPlainTextLanguage(language)
+      ? m.common_plain_text()
+      : (resolveCodeLanguage(language)?.label ?? language?.toLowerCase());
 
     const handleCopy = () => {
       navigator.clipboard.writeText(code);

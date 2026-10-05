@@ -2,10 +2,30 @@ import type { LanguageRegistration } from "shiki/core";
 
 /**
  * The single list of code block languages the blog supports. The publish-time
- * highlighter, the editor's language dropdown and the public code block badge
- * all read from here. Importing this module loads no grammar; each grammar is
- * fetched only when its `load` is called.
+ * highlighter, the editor's searchable language picker and the public code
+ * block badge all read from here. Importing this module loads no grammar; each
+ * grammar is fetched only when its `load` is called.
  */
+
+/**
+ * The language id of a code block rendered without a grammar: what the picker
+ * stores for plain text and what Shiki highlights unsupported languages as.
+ */
+export const PLAIN_TEXT = "text";
+
+/** Other names that mean plain text (Markdown fence names). */
+export const PLAIN_TEXT_ALIASES: ReadonlyArray<string> = ["txt", "plaintext"];
+
+const plainTextNames = new Set([PLAIN_TEXT, ...PLAIN_TEXT_ALIASES]);
+
+/**
+ * Whether a code block's language string (any case) explicitly means plain
+ * text. A missing language counts too, since blocks without one store none.
+ */
+export function isPlainTextLanguage(name: string | null | undefined) {
+  if (!name) return true;
+  return plainTextNames.has(name.trim().toLowerCase());
+}
 
 // Shiki language modules export `default` as an array of LanguageRegistration
 export type CodeLanguageModule = { default: Array<LanguageRegistration> };
@@ -13,7 +33,7 @@ export type CodeLanguageModule = { default: Array<LanguageRegistration> };
 export interface CodeLanguage {
   /** Shiki grammar id; also the value stored on code blocks picked in the editor. */
   id: string;
-  /** Human-readable name shown in the dropdown and the public badge. */
+  /** Human-readable name shown in the language picker and the public badge. */
   label: string;
   /** Other names that resolve to this language (e.g. Markdown fence names). */
   aliases: ReadonlyArray<string>;
