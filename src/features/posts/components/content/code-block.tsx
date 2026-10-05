@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Copy } from "lucide-react";
 import { memo, type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { ShikiHtml } from "@/components/content/shiki-html";
 import { isPlainTextLanguage, resolveCodeLanguage } from "@/lib/code-languages";
 import { escapeCodeHtml } from "@/lib/plain-code-html";
 import { cn } from "@/lib/utils";
@@ -98,10 +99,7 @@ export function CodeHtml({
 
   return (
     <div className="text-sm font-mono leading-relaxed transition-opacity duration-300">
-      <div
-        className="[&>pre]:px-5 [&>pre]:py-4 [&>pre]:m-0 [&>pre]:min-w-full [&>pre]:w-fit [&_code]:block [&_code]:w-fit [&>pre]:rounded-xl [&>pre>code]:p-0"
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      <ShikiHtml html={html} />
     </div>
   );
 }

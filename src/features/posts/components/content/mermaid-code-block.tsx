@@ -1,5 +1,4 @@
-import { useTheme } from "@/components/common/theme-provider";
-import { MermaidDiagram } from "@/components/content/mermaid-diagram";
+import { ThemedMermaidDiagram } from "@/components/content/themed-mermaid-diagram";
 import { MERMAID } from "@/lib/code-languages";
 import { CodeBlockFrame, CodeHtml } from "./code-block";
 
@@ -15,15 +14,11 @@ export default function MermaidCodeBlock({
   code: string;
   highlightedHtml?: string;
 }) {
-  const { appTheme } = useTheme();
-
   return (
     <CodeBlockFrame code={code} language={MERMAID}>
-      <MermaidDiagram
+      <ThemedMermaidDiagram
         source={code}
-        theme={appTheme}
         fallback={<CodeHtml code={code} highlightedHtml={highlightedHtml} />}
-        className="custom-scrollbar [&>svg]:my-4"
       />
     </CodeBlockFrame>
   );
