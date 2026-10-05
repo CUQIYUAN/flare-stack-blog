@@ -105,6 +105,31 @@ it("moves through the filtered list with the arrow keys", async () => {
   expect(codeBlockLanguage(target)).toBe("cpp");
 });
 
+it("leaves the list where the Admin scrolled it, and follows the arrow keys", async () => {
+  await renderCodeBlock("ts");
+  const scrollIntoView = vi.fn();
+  Object.defineProperty(Element.prototype, "scrollIntoView", {
+    configurable: true,
+    value: scrollIntoView,
+  });
+
+  try {
+    const search = openPicker();
+    scrollIntoView.mockClear();
+
+    const listbox = screen.getByRole("listbox");
+    fireEvent.scroll(listbox);
+    fireEvent.mouseMove(within(listbox).getAllByRole("option")[5]);
+    fireEvent.scroll(listbox);
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(search, { key: "ArrowDown" });
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+  } finally {
+    delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+  }
+});
+
 it("starts on the current language and closes with Escape without changing it", async () => {
   const target = await renderCodeBlock("python");
 

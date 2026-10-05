@@ -65,12 +65,18 @@ export function useAnchoredPopover({
       } as CSSProperties);
     };
 
+    // Scrolling inside the popover does not move the trigger.
+    const onScroll = (event: Event) => {
+      if (popoverRef.current?.contains(event.target as Node)) return;
+      update();
+    };
+
     update();
     window.addEventListener("resize", update);
-    document.addEventListener("scroll", update, true);
+    document.addEventListener("scroll", onScroll, true);
     return () => {
       window.removeEventListener("resize", update);
-      document.removeEventListener("scroll", update, true);
+      document.removeEventListener("scroll", onScroll, true);
     };
   }, [present, width, maxHeight]);
 

@@ -72,6 +72,9 @@ export function LanguagePicker({
     maxHeight: POPOVER_MAX_HEIGHT,
   });
   const searchRef = useRef<HTMLInputElement>(null);
+  // Set when the active option moves by keyboard, typing or opening, so it is
+  // scrolled into view; a hover or a scroll of the list leaves the list alone.
+  const revealActive = useRef(false);
   const listId = useId();
   const optionId = (id: string) => `${listId}-${id}`;
 
@@ -83,6 +86,7 @@ export function LanguagePicker({
 
   const openPicker = () => {
     setQuery("");
+    revealActive.current = true;
     setActiveIndex(
       Math.max(
         0,
@@ -102,12 +106,15 @@ export function LanguagePicker({
     close();
   };
 
-  useEffect(() => {
-    if (open && popoverStyle) searchRef.current?.focus();
-  }, [open, popoverStyle]);
+  const isShown = open && popoverStyle !== null;
 
   useEffect(() => {
-    if (!open || !active) return;
+    if (isShown) searchRef.current?.focus();
+  }, [isShown]);
+
+  useEffect(() => {
+    if (!isShown || !active || !revealActive.current) return;
+    revealActive.current = false;
     document
       .getElementById(optionId(active.id))
       ?.scrollIntoView?.({ block: "nearest" });
@@ -120,6 +127,7 @@ export function LanguagePicker({
         event.preventDefault();
         if (filtered.length === 0) return;
         const step = event.key === "ArrowDown" ? 1 : -1;
+        revealActive.current = true;
         setActiveIndex(
           (current) => (current + step + filtered.length) % filtered.length,
         );
@@ -193,6 +201,7 @@ export function LanguagePicker({
                   value={query}
                   onChange={(event) => {
                     setQuery(event.target.value);
+                    revealActive.current = true;
                     setActiveIndex(0);
                   }}
                   onKeyDown={handleSearchKeyDown}
