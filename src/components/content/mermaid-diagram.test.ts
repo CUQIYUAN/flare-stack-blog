@@ -72,7 +72,11 @@ it("replaces the source with the rendered diagram", async () => {
   render(createElement(MermaidDiagram, { source: SOURCE, theme: "light" }));
 
   expect(await screen.findByTestId("diagram")).toBeDefined();
-  expect(mermaid.render).toHaveBeenCalledWith(expect.any(String), SOURCE);
+  expect(mermaid.render).toHaveBeenCalledWith(
+    expect.any(String),
+    SOURCE,
+    expect.any(HTMLElement),
+  );
   expect(screen.queryByText(/A --> B/)).toBeNull();
 });
 
@@ -87,4 +91,16 @@ it("keeps the source and shows the error when the syntax is invalid", async () =
   expect(alert.textContent).toContain("Parse error on line 2");
   expect(screen.getByText(/A --> B/).textContent).toBe(SOURCE);
   expect(screen.queryByTestId("diagram")).toBeNull();
+});
+
+it("measures the diagram off the page so the window never scrolls", async () => {
+  render(createElement(MermaidDiagram, { source: SOURCE, theme: "light" }));
+  await screen.findByTestId("diagram");
+
+  const container = mermaid.render.mock.calls[0]?.[2] as
+    | HTMLElement
+    | undefined;
+  expect(container?.isConnected).toBe(true);
+  expect(container?.style.position).toBe("fixed");
+  expect(container?.getAttribute("aria-hidden")).toBe("true");
 });

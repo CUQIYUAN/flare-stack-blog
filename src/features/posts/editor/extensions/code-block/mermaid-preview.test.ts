@@ -97,7 +97,11 @@ it("shows a Mermaid block at rest as the rendered diagram", async () => {
   await renderCodeBlock("mermaid", SOURCE);
 
   expect(await screen.findByTestId("diagram")).toBeDefined();
-  expect(mermaid.render).toHaveBeenCalledWith(expect.any(String), SOURCE);
+  expect(mermaid.render).toHaveBeenCalledWith(
+    expect.any(String),
+    SOURCE,
+    expect.any(HTMLElement),
+  );
   expect(sourceIsVisible()).toBe(false);
 });
 
@@ -161,6 +165,7 @@ it("re-renders the diagram from the edited source after the Admin leaves the blo
   expect(mermaid.render).toHaveBeenLastCalledWith(
     expect.any(String),
     `${SOURCE}\n  B --> C`,
+    expect.any(HTMLElement),
   );
 });
 

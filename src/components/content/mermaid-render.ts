@@ -13,6 +13,28 @@ const loadMermaid = import.meta.env.SSR
 let queue: Promise<unknown> = Promise.resolve();
 let renderCount = 0;
 
+// Mermaid measures each diagram in a temporary element. Left in the body it
+// lengthens the page for a moment, so a window scrollbar flashes and the
+// layout jumps sideways. A fixed, off-screen host keeps it out of the flow.
+let measureHost: HTMLElement | null = null;
+
+function getMeasureHost() {
+  if (!measureHost?.isConnected) {
+    measureHost = document.createElement("div");
+    measureHost.setAttribute("aria-hidden", "true");
+    Object.assign(measureHost.style, {
+      position: "fixed",
+      top: "0",
+      left: "-10000px",
+      width: "100vw",
+      visibility: "hidden",
+      pointerEvents: "none",
+    });
+    document.body.appendChild(measureHost);
+  }
+  return measureHost;
+}
+
 export function renderMermaid(
   source: string,
   themeVariables: Record<string, string | boolean>,
@@ -31,6 +53,7 @@ export function renderMermaid(
     const { svg } = await mermaid.render(
       `mermaid-diagram-${renderCount}`,
       source,
+      getMeasureHost(),
     );
     return svg;
   });
