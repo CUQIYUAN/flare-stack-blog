@@ -482,6 +482,7 @@
   "common_view_full_image": "点击查看大图",
   "common_untitled": "未命名",
   "common_plain_text": "纯文本",
+  "common_mermaid_render_failed": "Mermaid 图表渲染失败",
   "common_modal_state_confirm": "确认",
   "common_modal_state_danger": "危险",
   "theme_light": "浅色",

@@ -85,6 +85,7 @@
     "katex": "^0.16.47",
     "lucide-react": "^1.48.0",
     "marked": "^17.0.6",
+    "mermaid": "^12.1.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-hook-form": "^7.89.0",
