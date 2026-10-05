@@ -9,8 +9,10 @@ import {
   useState,
   type MouseEvent,
 } from "react";
+import { useTheme } from "@/components/common/theme-provider";
+import { MermaidDiagram } from "@/components/content/mermaid-diagram";
 import { codeBlockHighlightKey } from "@/features/posts/utils/apply-code-block-highlighting";
-import { PLAIN_TEXT } from "@/lib/code-languages";
+import { isMermaidLanguage, PLAIN_TEXT } from "@/lib/code-languages";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import { CodeBlockHighlightContext } from "./code-block-highlight-context";
@@ -71,7 +73,9 @@ export function CodeBlockView({
   const currentKey = codeBlockHighlightKey(language, code);
   const html =
     resolvedHtml ?? (computedKey === currentKey ? computedHtml : undefined);
-  const showPreview = Boolean(html) && !editing;
+  const isMermaid = isMermaidLanguage(language);
+  const showDiagram = isMermaid && !editing && code.trim() !== "";
+  const showPreview = !isMermaid && Boolean(html) && !editing;
 
   useEffect(() => {
     const sync = () => rerender();
@@ -86,7 +90,7 @@ export function CodeBlockView({
   }, [editor]);
 
   useEffect(() => {
-    if (editing || html) return;
+    if (editing || html || isMermaid) return;
     const requestedLanguage = language;
     const requestedCode = code;
     let cancelled = false;
@@ -105,7 +109,7 @@ export function CodeBlockView({
       cancelled = true;
       cancelIdle();
     };
-  }, [editing, html, language, code]);
+  }, [editing, html, isMermaid, language, code]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
@@ -113,17 +117,28 @@ export function CodeBlockView({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handlePreviewMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+  const enterSourceEditing = (
+    event: MouseEvent<HTMLDivElement>,
+    offset: number,
+  ) => {
     if (!editor.isEditable || event.button !== 0) return;
     event.preventDefault();
     const pos = getPos();
     if (typeof pos !== "number") return;
-    const offset =
-      textOffsetFromPoint(event.currentTarget, event.clientX, event.clientY) ??
-      0;
     const target = codeBlockTextPos(pos, offset, code.length);
     editor.chain().focus().setTextSelection(target).run();
   };
+
+  const handlePreviewMouseDown = (event: MouseEvent<HTMLDivElement>) =>
+    enterSourceEditing(
+      event,
+      textOffsetFromPoint(event.currentTarget, event.clientX, event.clientY) ??
+        0,
+    );
+
+  // A point in the diagram maps to no source offset; edit from the end.
+  const handleDiagramMouseDown = (event: MouseEvent<HTMLDivElement>) =>
+    enterSourceEditing(event, code.length);
 
   return (
     <NodeViewWrapper className="not-prose group relative my-6 max-w-full outline-none [&.ProseMirror-selectednode]:outline-none [&.ProseMirror-selectednode]:ring-0 [&.ProseMirror-selectednode]:shadow-none">
@@ -159,7 +174,7 @@ export function CodeBlockView({
         <pre
           className={cn(
             "relative m-0 overflow-x-auto custom-scrollbar",
-            showPreview && "hidden",
+            (showPreview || showDiagram) && "hidden",
           )}
         >
           <NodeViewContent
@@ -168,6 +183,16 @@ export function CodeBlockView({
             spellCheck={false}
           />
         </pre>
+
+        {showDiagram ? (
+          <div
+            contentEditable={false}
+            className={cn(editor.isEditable && "cursor-text")}
+            onMouseDown={handleDiagramMouseDown}
+          >
+            <MermaidPreview code={code} highlightedHtml={resolvedHtml} />
+          </div>
+        ) : null}
 
         {showPreview ? (
           <div
@@ -178,13 +203,52 @@ export function CodeBlockView({
             )}
             onMouseDown={handlePreviewMouseDown}
           >
-            <div
-              className="[&>pre]:px-5 [&>pre]:py-4 [&>pre]:m-0 [&>pre]:min-w-full [&>pre]:w-fit [&_code]:block [&_code]:w-fit [&>pre]:rounded-xl [&>pre>code]:p-0"
-              dangerouslySetInnerHTML={{ __html: html ?? "" }}
-            />
+            <HighlightedCode html={html ?? ""} />
           </div>
         ) : null}
       </div>
     </NodeViewWrapper>
+  );
+}
+
+function HighlightedCode({ html }: { html: string }) {
+  return (
+    <div
+      className="[&>pre]:px-5 [&>pre]:py-4 [&>pre]:m-0 [&>pre]:min-w-full [&>pre]:w-fit [&_code]:block [&_code]:w-fit [&>pre]:rounded-xl [&>pre>code]:p-0"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
+/**
+ * A Mermaid block at rest: the diagram in the site theme, with the source
+ * (highlighted when the snapshot has it) until it renders and on a syntax
+ * error.
+ */
+function MermaidPreview({
+  code,
+  highlightedHtml,
+}: {
+  code: string;
+  highlightedHtml?: string;
+}) {
+  const { appTheme } = useTheme();
+  return (
+    <MermaidDiagram
+      source={code}
+      theme={appTheme}
+      className="custom-scrollbar [&>svg]:my-4"
+      fallback={
+        highlightedHtml ? (
+          <div className="overflow-x-auto custom-scrollbar">
+            <HighlightedCode html={highlightedHtml} />
+          </div>
+        ) : (
+          <pre className="m-0 overflow-x-auto custom-scrollbar px-5 py-4 font-mono text-sm leading-relaxed whitespace-pre fuwari-text-90">
+            <code>{code}</code>
+          </pre>
+        )
+      }
+    />
   );
 }

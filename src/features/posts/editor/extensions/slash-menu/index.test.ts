@@ -184,3 +184,27 @@ it("lets Enter split the line when nothing matches", () => {
   pressKey(target, "Enter");
   expect(outline(target)).toEqual(['paragraph("/zzz")', "paragraph"]);
 });
+
+it.each(["mermaid", "图表", "flowchart"])(
+  "/%s replaces the typed text with an empty Mermaid code block",
+  (query) => {
+    const target = open("<p>a</p><p></p>", 4);
+    typeText(target, `/${query}`);
+    expect(shownItems(target)?.[0]).toBe("mermaid");
+    pressKey(target, "Enter");
+
+    const [first, block] = target.getJSON().content ?? [];
+    expect(outline(target)[0]).toBe('paragraph("a")');
+    expect(block?.type).toBe("codeBlock");
+    expect(block?.attrs?.language).toBe("mermaid");
+    expect(block?.content).toBeUndefined();
+    expect(first?.type).toBe("paragraph");
+  },
+);
+
+it("lists the Mermaid item right after the code block item", () => {
+  const target = open();
+  typeText(target, "/");
+  const ids = shownItems(target) ?? [];
+  expect(ids[ids.indexOf("codeBlock") + 1]).toBe("mermaid");
+});

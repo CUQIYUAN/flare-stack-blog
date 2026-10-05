@@ -13,7 +13,9 @@ import {
   Quote,
   SquareFunction,
   Table as TableIcon,
+  Workflow,
 } from "lucide-react";
+import { MERMAID } from "@/lib/code-languages";
 import { m } from "@/paraglide/messages";
 
 /** A modal the Editor component opens for an item without in-place UI yet. */
@@ -99,6 +101,24 @@ export const SLASH_MENU_ITEMS: ReadonlyArray<SlashMenuItem> = [
     keywords: ["代码块", "代码", "code", "codeblock"],
     icon: Code,
     run: (context) => replaceWith(context, (chain) => chain.setCodeBlock()),
+  },
+  {
+    id: "mermaid",
+    title: m.editor_slash_mermaid,
+    keywords: [
+      "图表",
+      "流程图",
+      "时序图",
+      "mermaid",
+      "diagram",
+      "chart",
+      "flowchart",
+    ],
+    icon: Workflow,
+    run: (context) =>
+      replaceWith(context, (chain) =>
+        chain.setCodeBlock({ language: MERMAID }),
+      ),
   },
   {
     id: "table",

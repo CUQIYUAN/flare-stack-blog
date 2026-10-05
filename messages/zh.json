@@ -772,6 +772,7 @@
   "editor_slash_ordered_list": "有序列表",
   "editor_slash_blockquote": "引用",
   "editor_slash_code_block": "代码块",
+  "editor_slash_mermaid": "Mermaid 图表",
   "editor_slash_table": "表格",
   "editor_slash_divider": "分隔线",
   "editor_slash_block_math": "块级公式",

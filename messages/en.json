@@ -779,6 +779,7 @@
   "editor_slash_ordered_list": "Numbered list",
   "editor_slash_blockquote": "Quote",
   "editor_slash_code_block": "Code block",
+  "editor_slash_mermaid": "Mermaid diagram",
   "editor_slash_table": "Table",
   "editor_slash_divider": "Divider",
   "editor_slash_block_math": "Block formula",
