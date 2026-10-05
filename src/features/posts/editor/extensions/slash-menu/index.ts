@@ -7,9 +7,6 @@ import { Suggestion } from "@tiptap/suggestion";
 import type { SlashMenuItem, SlashMenuModal } from "./items";
 import { filterSlashMenuItems, SLASH_MENU_ITEMS } from "./items";
 
-export type { SlashMenuItem, SlashMenuModal } from "./items";
-export { SLASH_MENU_ITEMS } from "./items";
-
 /** What the open slash menu shows. */
 export interface SlashMenuState {
   /** The text typed after `/`. */
@@ -21,10 +18,6 @@ export interface SlashMenuState {
    * resize, and returns a cleanup. Interacting outside it closes the menu.
    */
   mount: SuggestionMount;
-}
-
-interface SlashMenuOptions {
-  items: ReadonlyArray<SlashMenuItem>;
 }
 
 interface SlashMenuStorage {
@@ -61,22 +54,21 @@ function setMenu(storage: SlashMenuStorage, menu: SlashMenuState | null) {
  * in place of the typed text and Escape closes the menu. It never opens in a
  * code block or a read-only editor. The `Editor` component renders it.
  */
-export const SlashMenu = Extension.create<SlashMenuOptions, SlashMenuStorage>({
+export const SlashMenu = Extension.create<
+  Record<string, never>,
+  SlashMenuStorage
+>({
   name: "slashMenu",
-
-  addOptions() {
-    return { items: SLASH_MENU_ITEMS };
-  },
 
   addStorage() {
     return { menu: null, pick: null, listeners: new Set(), openModal: null };
   },
 
   addProseMirrorPlugins() {
-    const { editor, storage, options } = this;
+    const { editor, storage } = this;
 
     const show = (props: SuggestionProps<SlashMenuItem, SlashMenuItem>) => {
-      const items = filterSlashMenuItems(options.items, props.query);
+      const items = filterSlashMenuItems(SLASH_MENU_ITEMS, props.query);
       const previous = storage.menu;
       storage.pick = props.command;
       setMenu(storage, {

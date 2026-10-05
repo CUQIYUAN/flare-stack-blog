@@ -48,6 +48,11 @@ function replaceWith(
   insert(editor.chain().focus().deleteRange(range)).run();
 }
 
+/** Removes the typed `/query`, for items that insert through a modal. */
+function deleteTypedQuery({ editor, range }: SlashMenuItemContext) {
+  editor.chain().focus().deleteRange(range).run();
+}
+
 function heading(level: 2 | 3 | 4, icon: LucideIcon, title: () => string) {
   return {
     id: `heading${level}`,
@@ -144,7 +149,7 @@ export const SLASH_MENU_ITEMS: ReadonlyArray<SlashMenuItem> = [
     keywords: ["块级公式", "公式", "数学", "math", "formula", "latex"],
     icon: SquareFunction,
     run: (context) => {
-      replaceWith(context, (chain) => chain);
+      deleteTypedQuery(context);
       context.openModal("blockMath");
     },
   },
@@ -154,7 +159,7 @@ export const SLASH_MENU_ITEMS: ReadonlyArray<SlashMenuItem> = [
     keywords: ["图片", "image", "picture", "photo"],
     icon: ImageIcon,
     run: (context) => {
-      replaceWith(context, (chain) => chain);
+      deleteTypedQuery(context);
       context.openModal("image");
     },
   },
