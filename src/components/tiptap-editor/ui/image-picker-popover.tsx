@@ -67,7 +67,7 @@ export function ImagePickerPopover({ editor }: { editor: Editor | null }) {
       onClose={() => editor?.commands.closeImagePicker()}
       initialFocus={() => tabRefs.current.get(tab) ?? null}
       role="dialog"
-      aria-label={m.editor_insert_media_title()}
+      aria-label={m.editor_image_picker_title()}
       className="flex w-96 max-w-[calc(100vw-1rem)] flex-col gap-2 p-2"
     >
       <div role="tablist" className="flex gap-1" onKeyDown={onTabKeyDown}>
@@ -176,7 +176,7 @@ function LinkPanel({
           event.preventDefault();
           void submit();
         }}
-        aria-label={m.editor_insert_image_url()}
+        aria-label={m.editor_image_url()}
         placeholder="https://"
         disabled={importing}
         className="h-8 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-sm fuwari-text-90 outline-none placeholder:fuwari-text-30"
@@ -185,8 +185,8 @@ function LinkPanel({
         type="button"
         onClick={() => void submit()}
         disabled={importing || !url.trim()}
-        aria-label={m.editor_insert_import()}
-        title={m.editor_insert_import()}
+        aria-label={m.editor_image_import()}
+        title={m.editor_image_import()}
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg fuwari-text-50 hover:bg-(--fuwari-btn-regular-bg) hover:text-(--fuwari-primary) disabled:opacity-50"
       >
         {importing ? (

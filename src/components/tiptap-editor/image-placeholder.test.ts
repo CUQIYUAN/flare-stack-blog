@@ -60,7 +60,7 @@ afterEach(() => {
 });
 
 function picker() {
-  return screen.queryByRole("dialog", { name: m.editor_insert_media_title() });
+  return screen.queryByRole("dialog", { name: m.editor_image_picker_title() });
 }
 
 function topLevel(editor: Editor) {
@@ -80,7 +80,7 @@ async function openFromToolbar() {
     );
   });
   const dialog = await screen.findByRole("dialog", {
-    name: m.editor_insert_media_title(),
+    name: m.editor_image_picker_title(),
   });
   return { ...view, dialog };
 }
@@ -143,7 +143,7 @@ it("imports a linked image into the media library and puts it in place", async (
     );
   });
   const input = within(dialog).getByRole("textbox", {
-    name: m.editor_insert_image_url(),
+    name: m.editor_image_url(),
   });
   act(() => {
     fireEvent.change(input, {
@@ -184,7 +184,7 @@ it("keeps the placeholder on Escape and reopens the picker when it is clicked", 
     fireEvent.click(placeholder);
   });
   expect(
-    await screen.findByRole("dialog", { name: m.editor_insert_media_title() }),
+    await screen.findByRole("dialog", { name: m.editor_image_picker_title() }),
   ).toBeDefined();
 });
 
@@ -235,7 +235,7 @@ it("inserts a placeholder from the slash menu's image item", async () => {
   });
 
   expect(
-    await screen.findByRole("dialog", { name: m.editor_insert_media_title() }),
+    await screen.findByRole("dialog", { name: m.editor_image_picker_title() }),
   ).toBeDefined();
   expect(topLevel(editor)).toEqual([
     "paragraph",
