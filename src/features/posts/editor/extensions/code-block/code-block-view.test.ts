@@ -25,6 +25,7 @@ let editor: Editor | undefined;
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   editor?.destroy();
   editor = undefined;
 });
@@ -142,4 +143,41 @@ it("says so when nothing matches and ignores Enter", async () => {
   fireEvent.keyDown(search, { key: "Enter" });
   expect(codeBlockLanguage(target)).toBe("ts");
   expect(screen.getByRole("combobox")).toBe(search);
+});
+
+it("shows plain-text aliases as plain text and starts on that option", async () => {
+  await renderCodeBlock("txt");
+
+  expect(trigger().textContent).toBe(m.common_plain_text());
+  expect(activeOption(openPicker())).toBe(m.common_plain_text());
+});
+
+it("anchors the popover to the trigger, opening upward without room below", async () => {
+  await renderCodeBlock("ts");
+  const top = window.innerHeight - 200;
+  vi.spyOn(trigger(), "getBoundingClientRect").mockReturnValue(
+    DOMRect.fromRect({ x: 800, y: top, width: 100, height: 24 }),
+  );
+
+  openPicker();
+
+  const popover = screen.getByRole("listbox").parentElement as HTMLElement;
+  expect(popover.style.position).toBe("fixed");
+  expect(popover.style.right).toBe(`${window.innerWidth - 900}px`);
+  expect(popover.style.width).toBe("208px");
+  expect(popover.style.bottom).toBe("204px");
+  expect(popover.style.transformOrigin).toBe("bottom right");
+});
+
+it("closes without changing the language when the Admin clicks elsewhere", async () => {
+  const target = await renderCodeBlock("ts");
+
+  const search = openPicker();
+  fireEvent.mouseDown(search);
+  expect(screen.getByRole("listbox")).toBeTruthy();
+
+  fireEvent.mouseDown(document.body);
+
+  expect(screen.queryByRole("listbox")).toBeNull();
+  expect(codeBlockLanguage(target)).toBe("ts");
 });

@@ -2,16 +2,24 @@ import { Check, ChevronDown, Search } from "lucide-react";
 import {
   useEffect,
   useId,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type KeyboardEvent,
 } from "react";
 import { createPortal } from "react-dom";
-import { MOTION, useMotionPresence } from "@/hooks/use-motion";
-import { CODE_LANGUAGES, resolveCodeLanguage } from "@/lib/code-languages";
+import {
+  POPOVER_PANEL_CLASS,
+  POPOVER_TRIGGER_CLASS,
+  useAnchoredPopover,
+} from "@/components/ui/use-anchored-popover";
+import {
+  CODE_LANGUAGES,
+  PLAIN_TEXT,
+  PLAIN_TEXT_ALIASES,
+  isPlainTextLanguage,
+  resolveCodeLanguage,
+} from "@/lib/code-languages";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import { filterLanguageOptions, type LanguageOption } from "./language-options";
@@ -22,7 +30,11 @@ const POPOVER_MAX_HEIGHT = 320;
 function pickerOptions(): Array<LanguageOption> {
   return [
     ...CODE_LANGUAGES,
-    { id: "text", label: m.common_plain_text(), aliases: [] },
+    {
+      id: PLAIN_TEXT,
+      label: m.common_plain_text(),
+      aliases: PLAIN_TEXT_ALIASES,
+    },
   ];
 }
 
@@ -40,17 +52,25 @@ export function LanguagePicker({
   onChange: (id: string) => void;
 }) {
   const options = useMemo(pickerOptions, []);
-  const currentId = resolveCodeLanguage(value)?.id ?? value;
+  const currentId = isPlainTextLanguage(value)
+    ? PLAIN_TEXT
+    : (resolveCodeLanguage(value)?.id ?? value);
   const currentLabel =
     options.find((option) => option.id === currentId)?.label ?? value;
 
   const [open, setOpen] = useState(false);
-  const present = useMotionPresence(open, MOTION.popover);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
-  const [popoverStyle, setPopoverStyle] = useState<CSSProperties | null>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const {
+    triggerRef,
+    popoverRef,
+    style: popoverStyle,
+  } = useAnchoredPopover({
+    open,
+    onDismiss: () => setOpen(false),
+    width: POPOVER_WIDTH,
+    maxHeight: POPOVER_MAX_HEIGHT,
+  });
   const searchRef = useRef<HTMLInputElement>(null);
   const listId = useId();
   const optionId = (id: string) => `${listId}-${id}`;
@@ -82,54 +102,9 @@ export function LanguagePicker({
     close();
   };
 
-  useLayoutEffect(() => {
-    if (!present) {
-      setPopoverStyle(null);
-      return;
-    }
-
-    const update = () => {
-      const trigger = triggerRef.current;
-      if (!trigger) return;
-      const rect = trigger.getBoundingClientRect();
-      const gap = 4;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const openUp = spaceBelow < POPOVER_MAX_HEIGHT && rect.top > spaceBelow;
-      setPopoverStyle({
-        position: "fixed",
-        right: window.innerWidth - rect.right,
-        width: POPOVER_WIDTH,
-        top: openUp ? undefined : rect.bottom + gap,
-        bottom: openUp ? window.innerHeight - rect.top + gap : undefined,
-        transformOrigin: openUp ? "bottom right" : "top right",
-        "--popover-offset": openUp ? "4px" : "-4px",
-      } as CSSProperties);
-    };
-
-    update();
-    window.addEventListener("resize", update);
-    document.addEventListener("scroll", update, true);
-    return () => {
-      window.removeEventListener("resize", update);
-      document.removeEventListener("scroll", update, true);
-    };
-  }, [present]);
-
   useEffect(() => {
     if (open && popoverStyle) searchRef.current?.focus();
   }, [open, popoverStyle]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (triggerRef.current?.contains(target)) return;
-      if (popoverRef.current?.contains(target)) return;
-      setOpen(false);
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [open]);
 
   useEffect(() => {
     if (!open || !active) return;
@@ -173,7 +148,7 @@ export function LanguagePicker({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => (open ? setOpen(false) : openPicker())}
-        className="flex items-center gap-1 rounded-lg bg-(--fuwari-primary)/10 px-2 py-0.5 font-mono text-xs font-bold uppercase text-(--fuwari-primary)"
+        className={POPOVER_TRIGGER_CLASS}
       >
         <span>{currentLabel}</span>
         <ChevronDown
@@ -186,7 +161,7 @@ export function LanguagePicker({
         />
       </button>
 
-      {present && popoverStyle
+      {popoverStyle
         ? createPortal(
             <div
               ref={popoverRef}
@@ -194,7 +169,10 @@ export function LanguagePicker({
               inert={!open}
               aria-hidden={!open}
               style={popoverStyle}
-              className="fuwari-popover-motion z-80 flex flex-col overflow-hidden rounded-xl bg-(--fuwari-card-bg) shadow-md ring-1 ring-(--fuwari-input-border)"
+              className={cn(
+                POPOVER_PANEL_CLASS,
+                "flex flex-col overflow-hidden",
+              )}
             >
               <div className="flex items-center gap-2 border-b border-(--fuwari-input-border) px-3 py-2 fuwari-text-50 focus-within:text-(--fuwari-primary)">
                 <Search size={14} aria-hidden="true" className="shrink-0" />
