@@ -234,7 +234,10 @@ export const TableBubbleMenu: React.FC<TableBubbleMenuProps> = ({ editor }) => {
     scroller?.addEventListener("scroll", place, { passive: true });
     window.addEventListener("resize", place);
     window.addEventListener("scroll", place, true);
+    // Dragging a column border moves the cell without moving the selection.
+    editor.on("update", place);
     return () => {
+      editor.off("update", place);
       scroller?.removeEventListener("scroll", place);
       window.removeEventListener("resize", place);
       window.removeEventListener("scroll", place, true);

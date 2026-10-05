@@ -3,6 +3,7 @@ import { renderToReactElement } from "@tiptap/static-renderer/pm/react";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Children, lazy, type ReactNode, Suspense } from "react";
 import { schemaExtensions } from "@/features/posts/editor/schema";
+import { tableColumnLayout } from "@/features/posts/editor/extensions/table/column-widths";
 import { isMermaidLanguage } from "@/lib/code-languages";
 import { parseImageSize } from "@/features/posts/utils/normalize-content";
 import {
@@ -84,9 +85,24 @@ export function renderReact(
           const headerCount = leadingHeaderRowCount(node);
           const headerRows = rows.slice(0, headerCount);
           const bodyRows = rows.slice(headerCount);
+          // Stored pixel widths are proportions here (ADR 0028).
+          const layout = tableColumnLayout(node);
           return (
             <div className="fuwari-table-scroll">
-              <table>
+              <table
+                style={
+                  layout
+                    ? { tableLayout: "fixed", minWidth: layout.minWidth }
+                    : undefined
+                }
+              >
+                {layout ? (
+                  <colgroup>
+                    {layout.widths.map((width, index) => (
+                      <col key={index} style={{ width }} />
+                    ))}
+                  </colgroup>
+                ) : null}
                 {headerRows.length > 0 ? <thead>{headerRows}</thead> : null}
                 {bodyRows.length > 0 ? <tbody>{bodyRows}</tbody> : null}
               </table>
