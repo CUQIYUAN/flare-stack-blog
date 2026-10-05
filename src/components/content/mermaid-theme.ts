@@ -14,6 +14,8 @@ const COLOR_TOKENS = {
   secondaryColor: "--fuwari-selection-bg",
   tertiaryColor: "--fuwari-page-bg",
   lineColor: "--fuwari-btn-content",
+  // Edge labels sit on the diagram background instead of a derived block.
+  edgeLabelBackground: "--fuwari-code-bg",
   textColor: "--fuwari-fg",
   noteBkgColor: "--fuwari-warning-bg",
   noteBorderColor: "--fuwari-warning",
