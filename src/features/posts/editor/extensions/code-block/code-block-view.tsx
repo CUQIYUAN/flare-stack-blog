@@ -9,9 +9,7 @@ import {
   useState,
   type MouseEvent,
 } from "react";
-import DropdownMenu from "@/components/ui/dropdown-menu";
 import { codeBlockHighlightKey } from "@/features/posts/utils/apply-code-block-highlighting";
-import { CODE_LANGUAGES, resolveCodeLanguage } from "@/lib/code-languages";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import { CodeBlockHighlightContext } from "./code-block-highlight-context";
@@ -23,13 +21,7 @@ import {
   scheduleIdle,
   textOffsetFromPoint,
 } from "./highlight";
-
-function languageOptions() {
-  return [
-    ...CODE_LANGUAGES.map((lang) => ({ label: lang.label, value: lang.id })),
-    { label: m.common_plain_text(), value: "text" },
-  ];
-}
+import { LanguagePicker } from "./language-picker";
 
 function selectionIsInCodeBlock(
   editor: Editor,
@@ -156,10 +148,9 @@ export function CodeBlockView({
             )}
           </button>
           {editor.isEditable ? (
-            <DropdownMenu
-              value={resolveCodeLanguage(language)?.id ?? language}
-              onChange={(val) => updateAttributes({ language: val })}
-              options={languageOptions()}
+            <LanguagePicker
+              value={language}
+              onChange={(id) => updateAttributes({ language: id })}
             />
           ) : null}
         </div>
