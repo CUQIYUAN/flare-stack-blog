@@ -2,6 +2,7 @@ import type { Editor } from "@tiptap/react";
 import { CornerDownLeft, Loader2, Upload } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useId, useRef, useState } from "react";
+import { IconButton } from "@/components/ui/icon-button";
 import { MediaPickerGrid } from "@/features/media/components/media-library/components";
 import {
   useMediaPicker,
@@ -181,20 +182,17 @@ function LinkPanel({
         disabled={importing}
         className="h-8 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-sm fuwari-text-90 outline-none placeholder:fuwari-text-30"
       />
-      <button
-        type="button"
+      <IconButton
+        label={m.editor_image_import()}
         onClick={() => void submit()}
         disabled={importing || !url.trim()}
-        aria-label={m.editor_image_import()}
-        title={m.editor_image_import()}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg fuwari-text-50 hover:bg-(--fuwari-btn-regular-bg) hover:text-(--fuwari-primary) disabled:opacity-50"
       >
         {importing ? (
           <Loader2 size={14} className="animate-spin" />
         ) : (
           <CornerDownLeft size={14} />
         )}
-      </button>
+      </IconButton>
     </div>
   );
 }

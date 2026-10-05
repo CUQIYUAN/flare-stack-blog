@@ -1,38 +1,13 @@
 import type { Editor } from "@tiptap/react";
-import type { LucideIcon } from "lucide-react";
 import { ExternalLink, Pencil, Unlink } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { IconButton, iconButtonClass } from "@/components/ui/icon-button";
 import { useLinkEditor } from "@/features/posts/editor/extensions/link-editing";
 import { m } from "@/paraglide/messages";
 import { EditorPopover } from "./editor-popover";
 
 const OPEN_DELAY = 300;
 const CLOSE_DELAY = 200;
-
-const ACTION_CLASS =
-  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg fuwari-text-50 hover:bg-(--fuwari-btn-regular-bg) hover:text-(--fuwari-primary)";
-
-function CardButton({
-  icon: Icon,
-  label,
-  onClick,
-}: {
-  icon: LucideIcon;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className={ACTION_CLASS}
-    >
-      <Icon size={14} />
-    </button>
-  );
-}
 
 /**
  * The card that hovering a link in the editor shows: the link's address and
@@ -121,12 +96,11 @@ export function LinkHoverCard({ editor }: { editor: Editor | null }) {
         aria-label={m.editor_link_open()}
         title={m.editor_link_open()}
         onClick={close}
-        className={ACTION_CLASS}
+        className={iconButtonClass()}
       >
         <ExternalLink size={14} />
       </a>
-      <CardButton
-        icon={Pencil}
+      <IconButton
         label={m.editor_link_edit()}
         onClick={() => {
           const pos = linkPos();
@@ -136,9 +110,10 @@ export function LinkHoverCard({ editor }: { editor: Editor | null }) {
             editor?.chain().setTextSelection(pos).openLinkEditor().run();
           }
         }}
-      />
-      <CardButton
-        icon={Unlink}
+      >
+        <Pencil size={14} />
+      </IconButton>
+      <IconButton
         label={m.editor_link_remove()}
         onClick={() => {
           const pos = linkPos();
@@ -147,7 +122,9 @@ export function LinkHoverCard({ editor }: { editor: Editor | null }) {
             editor?.chain().focus().setTextSelection(pos).unsetLink().run();
           }
         }}
-      />
+      >
+        <Unlink size={14} />
+      </IconButton>
     </EditorPopover>
   );
 }

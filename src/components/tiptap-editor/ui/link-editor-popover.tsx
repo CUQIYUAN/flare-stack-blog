@@ -1,6 +1,7 @@
 import type { Editor } from "@tiptap/react";
 import { CornerDownLeft } from "lucide-react";
 import { useRef } from "react";
+import { IconButton } from "@/components/ui/icon-button";
 import { useLinkEditor } from "@/features/posts/editor/extensions/link-editing";
 import { m } from "@/paraglide/messages";
 import { EditorPopover } from "./editor-popover";
@@ -45,15 +46,9 @@ export function LinkEditorPopover({ editor }: { editor: Editor | null }) {
         }}
         className="h-8 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-sm fuwari-text-90 outline-none placeholder:fuwari-text-30"
       />
-      <button
-        type="button"
-        onClick={apply}
-        aria-label={m.editor_link_apply()}
-        title={m.editor_link_apply()}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg fuwari-text-50 hover:bg-(--fuwari-btn-regular-bg) hover:text-(--fuwari-primary)"
-      >
+      <IconButton label={m.editor_link_apply()} onClick={apply}>
         <CornerDownLeft size={14} />
-      </button>
+      </IconButton>
     </EditorPopover>
   );
 }
