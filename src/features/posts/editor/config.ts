@@ -9,6 +9,7 @@ import {
 } from "@/components/tiptap-editor/formula-modal-store";
 import { CodeBlockExtension } from "@/features/posts/editor/extensions/code-block";
 import { ImageExtension } from "@/features/posts/editor/extensions/images";
+import { ImagePlaceholder } from "@/features/posts/editor/extensions/image-placeholder";
 import { MarkdownPaste } from "@/features/posts/editor/extensions/markdown-paste";
 import { createSchemaExtensions } from "@/features/posts/editor/schema";
 import { LinkEditing } from "@/features/posts/editor/extensions/link-editing";
@@ -106,6 +107,7 @@ export const extensions = [
       });
     },
   }),
+  ImagePlaceholder,
   FileHandler.configure({
     allowedMimeTypes: ALLOWED_IMAGE_MIME_TYPES,
     onDrop: handleFileDrop,
