@@ -73,21 +73,6 @@ it("inserts the clicked item", async () => {
   expect(slashMenu()).toBeNull();
 });
 
-it("opens the image modal from the image item", async () => {
-  const { editor } = await renderPostEditor();
-  editor.commands.focus("end");
-
-  act(() => typeText(editor, "/image"));
-  await screen.findByRole("listbox", { name: m.editor_slash_menu() });
-  act(() => {
-    pressKey(editor, "Enter");
-  });
-
-  expect(
-    await screen.findByRole("dialog", { name: m.editor_insert_media_title() }),
-  ).toBeDefined();
-});
-
 it("does not show the slash menu in a read-only editor", async () => {
   const { editor } = await renderPostEditor({ editable: false });
 

@@ -18,14 +18,10 @@ import {
 import { MERMAID } from "@/lib/code-languages";
 import { m } from "@/paraglide/messages";
 
-/** A modal the Editor component opens for an item without in-place UI yet. */
-export type SlashMenuModal = "image";
-
 export interface SlashMenuItemContext {
   editor: Editor;
   /** The typed `/` and filter text, which the item replaces. */
   range: Range;
-  openModal: (modal: SlashMenuModal) => void;
 }
 
 export interface SlashMenuItem {
@@ -46,11 +42,6 @@ function replaceWith(
   insert: (chain: ReturnType<Editor["chain"]>) => ReturnType<Editor["chain"]>,
 ) {
   insert(editor.chain().focus().deleteRange(range)).run();
-}
-
-/** Removes the typed `/query`, for items that insert through a modal. */
-function deleteTypedQuery({ editor, range }: SlashMenuItemContext) {
-  editor.chain().focus().deleteRange(range).run();
 }
 
 function heading(level: 2 | 3 | 4, icon: LucideIcon, title: () => string) {
@@ -157,10 +148,9 @@ export const SLASH_MENU_ITEMS: ReadonlyArray<SlashMenuItem> = [
     title: m.editor_slash_image,
     keywords: ["图片", "image", "picture", "photo"],
     icon: ImageIcon,
-    run: (context) => {
-      deleteTypedQuery(context);
-      context.openModal("image");
-    },
+    // Focusing here would pull focus back from the image picker.
+    run: ({ editor, range }) =>
+      editor.chain().deleteRange(range).insertImagePlaceholder().run(),
   },
 ];
 

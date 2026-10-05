@@ -4,7 +4,7 @@ import { Extension } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
 import type { SuggestionMount, SuggestionProps } from "@tiptap/suggestion";
 import { Suggestion } from "@tiptap/suggestion";
-import type { SlashMenuItem, SlashMenuModal } from "./items";
+import type { SlashMenuItem } from "./items";
 import { filterSlashMenuItems, SLASH_MENU_ITEMS } from "./items";
 
 /** What the open slash menu shows. */
@@ -24,7 +24,6 @@ interface SlashMenuStorage {
   menu: SlashMenuState | null;
   pick: ((item: SlashMenuItem) => void) | null;
   listeners: Set<() => void>;
-  openModal: ((modal: SlashMenuModal) => void) | null;
 }
 
 declare module "@tiptap/core" {
@@ -61,7 +60,7 @@ export const SlashMenu = Extension.create<
   name: "slashMenu",
 
   addStorage() {
-    return { menu: null, pick: null, listeners: new Set(), openModal: null };
+    return { menu: null, pick: null, listeners: new Set() };
   },
 
   addProseMirrorPlugins() {
@@ -99,11 +98,7 @@ export const SlashMenu = Extension.create<
         allow: ({ state, range }) =>
           !state.doc.resolve(range.from).parent.type.spec.code,
         command: ({ editor: target, range, props: item }) =>
-          item.run({
-            editor: target,
-            range,
-            openModal: (modal) => storage.openModal?.(modal),
-          }),
+          item.run({ editor: target, range }),
         // Keep the menu inside narrow viewports.
         floatingUi: { strategy: "fixed", middleware: [shift({ padding: 8 })] },
         render: () => ({
@@ -169,20 +164,4 @@ export function pickSlashMenuItem(editor: Editor, index: number) {
   const storage = storageOf(editor);
   const item = storage?.menu?.items[index];
   if (item) storage.pick?.(item);
-}
-
-/**
- * Lets the `Editor` component open its modal for the image item until that
- * has in-place editing. Returns a cleanup.
- */
-export function setSlashMenuModalOpener(
-  editor: Editor,
-  openModal: (modal: SlashMenuModal) => void,
-) {
-  const storage = storageOf(editor);
-  if (!storage) return () => {};
-  storage.openModal = openModal;
-  return () => {
-    if (storage.openModal === openModal) storage.openModal = null;
-  };
 }

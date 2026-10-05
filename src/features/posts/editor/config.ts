@@ -4,6 +4,7 @@ import type { Editor as TiptapEditor } from "@tiptap/react";
 import { toast } from "sonner";
 import { CodeBlockExtension } from "@/features/posts/editor/extensions/code-block";
 import { ImageExtension } from "@/features/posts/editor/extensions/images";
+import { ImagePlaceholder } from "@/features/posts/editor/extensions/image-placeholder";
 import { MarkdownPaste } from "@/features/posts/editor/extensions/markdown-paste";
 import { MathEditing } from "@/features/posts/editor/extensions/math-editing";
 import { createSchemaExtensions } from "@/features/posts/editor/schema";
@@ -71,6 +72,7 @@ export const extensions = [
       });
     },
   }),
+  ImagePlaceholder,
   FileHandler.configure({
     allowedMimeTypes: ALLOWED_IMAGE_MIME_TYPES,
     onDrop: handleFileDrop,

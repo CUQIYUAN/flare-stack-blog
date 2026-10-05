@@ -27,7 +27,7 @@ export function createPostEditor({
 }
 
 /** Fills in the browser APIs jsdom lacks that the editor's UI uses. */
-function installDomShims() {
+export function installDomShims() {
   // Motion and mobile layout hooks read media queries.
   window.matchMedia ??= (query: string) =>
     ({
@@ -43,6 +43,15 @@ function installDomShims() {
   HTMLDialogElement.prototype.close ??= function (this: HTMLDialogElement) {
     this.open = false;
   };
+  // The media library grid loads more as its end scrolls into view.
+  window.IntersectionObserver ??= class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+  } as unknown as typeof IntersectionObserver;
   // Popovers anchored to the selection measure text ranges; jsdom lays out
   // nothing, so every range is an empty rectangle at the origin.
   Range.prototype.getBoundingClientRect ??= () => new DOMRect();
@@ -63,7 +72,7 @@ export async function renderPostEditor({
   let created: TiptapEditor | null = null;
   const view = await act(async () =>
     render(
-      // The image modal's media library queries through React Query.
+      // The image picker's media library queries through React Query.
       createElement(
         QueryClientProvider,
         {

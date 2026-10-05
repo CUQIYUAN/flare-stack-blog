@@ -6,13 +6,12 @@ import type {
   Editor as TiptapEditor,
 } from "@tiptap/react";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo } from "react";
 import type { ReactNode } from "react";
-import { setSlashMenuModalOpener } from "@/features/posts/editor/extensions/slash-menu";
 import { SlashMenuView } from "@/features/posts/editor/extensions/slash-menu/slash-menu-view";
 import { cn } from "@/lib/utils";
 import EditorToolbar from "./ui/editor-toolbar";
-import { ImageModal } from "./ui/image-modal";
+import { ImagePickerPopover } from "./ui/image-picker-popover";
 import { LinkEditorPopover } from "./ui/link-editor-popover";
 import { LinkHoverCard } from "./ui/link-hover-card";
 import { MathEditorPopover } from "./ui/math-editor-popover";
@@ -45,8 +44,6 @@ export const Editor = memo(function Editor({
   scrollContainerId,
   toolbarClassName,
 }: EditorProps) {
-  const [imageModalOpen, setImageModalOpen] = useState(false);
-
   const editor = useEditor({
     extensions,
     content,
@@ -72,24 +69,6 @@ export const Editor = memo(function Editor({
     immediatelyRender: false,
   });
 
-  const openImageModal = useCallback(() => {
-    setImageModalOpen(true);
-  }, []);
-
-  // The slash menu's image item opens the image modal for now.
-  useEffect(() => {
-    if (!editor || !editable) return;
-    return setSlashMenuModalOpener(editor, (modal) => {
-      switch (modal) {
-        case "image":
-          openImageModal();
-          return;
-        default:
-          modal satisfies never;
-      }
-    });
-  }, [editor, editable, openImageModal]);
-
   return (
     <div className={cn("relative flex flex-col group", className)}>
       {editable && (
@@ -97,7 +76,7 @@ export const Editor = memo(function Editor({
           editor={editor}
           className={toolbarClassName}
           onLinkClick={() => editor?.commands.openLinkEditor()}
-          onImageClick={openImageModal}
+          onImageClick={() => editor?.commands.insertImagePlaceholder()}
           onFormulaInlineClick={() => editor?.commands.insertMath("inline")}
           onFormulaBlockClick={() => editor?.commands.insertMath("block")}
         />
@@ -108,6 +87,7 @@ export const Editor = memo(function Editor({
       {editable && <SlashMenuView editor={editor} />}
       {editable && <LinkEditorPopover editor={editor} />}
       {editable && <LinkHoverCard editor={editor} />}
+      {editable && <ImagePickerPopover editor={editor} />}
       {editable && <MathEditorPopover editor={editor} />}
 
       <div
@@ -117,17 +97,6 @@ export const Editor = memo(function Editor({
         {documentHeader}
         <EditorContent editor={editor} />
       </div>
-
-      {editable && (
-        <ImageModal
-          open={imageModalOpen}
-          returnFocus={() => editor?.view.dom ?? null}
-          onClose={() => setImageModalOpen(false)}
-          onSelect={(image) => {
-            editor?.chain().focus().setImage(image).run();
-          }}
-        />
-      )}
     </div>
   );
 });
