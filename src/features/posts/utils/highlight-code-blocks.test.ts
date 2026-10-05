@@ -5,30 +5,72 @@ import { highlightSnapshotContent } from "./highlight-code-blocks";
 
 // One snippet per supported language; each must contain several token kinds.
 const SAMPLES: Record<string, string> = {
+  apache:
+    '<VirtualHost *:80>\n  ServerName example.com\n  DocumentRoot "/var/www"\n</VirtualHost>',
+  astro: '---\nconst title = "Hi";\n---\n<h1 class="a">{title}</h1>',
+  bat: '@echo off\nset NAME=world\nif "%NAME%"=="world" echo Hello %NAME%',
   c: "#include <stdio.h>\nint main(void) { return 0; }",
+  cmake:
+    "cmake_minimum_required(VERSION 3.20)\nproject(demo LANGUAGES CXX)\nadd_executable(demo main.cpp)",
   cpp: "#include <vector>\nclass A { public: int x = 1; };",
   csharp: 'public class A { string s = "x"; }',
   css: ".a { color: red; }",
+  dart: 'void main() {\n  final s = "x";\n  print(s);\n}',
+  diff: "--- a/file.txt\n+++ b/file.txt\n@@ -1,2 +1,2 @@\n-old line\n+new line",
   dockerfile: "FROM node:22\nRUN npm ci",
+  elixir: 'defmodule A do\n  def f(x), do: "x#{x}"\nend',
+  erlang: '-module(a).\n-export([f/1]).\nf(X) -> {ok, "x", X}.',
   go: 'package main\nfunc main() { s := "x" }',
+  graphql: "query GetPost($id: ID!) {\n  post(id: $id) { title }\n}",
+  groovy: 'def s = "x"\nclass A { int n = 1 }\nprintln s',
+  haskell: 'module Main where\nmain :: IO ()\nmain = putStrLn "x"',
   html: '<div class="a">hi</div>',
+  ini: '[server]\nport = 8080\nname = "blog"',
   java: 'public class A { String s = "x"; }',
   javascript: 'const a = "x"; function f() { return 1; }',
   json: '{ "a": 1, "b": true }',
   jsx: 'const el = <div className="a">{1}</div>;',
   kotlin: 'fun main() { val s = "x" }',
+  latex:
+    "\\documentclass{article}\n\\begin{document}\nHello $x^2$\n\\end{document}",
+  less: "@color: red;\n.a { color: @color; .b { margin: 0; } }",
+  lua: 'local function f(x)\n  return "x" .. x\nend',
+  make: "CC = gcc\nall: main.o\n\t$(CC) -o app main.o",
   markdown: "# Title\n\n**bold** and `code`",
+  matlab: "function y = f(x)\n  y = x .^ 2; % square\nend",
+  nginx:
+    "server {\n  listen 80;\n  location / { proxy_pass http://127.0.0.1:3000; }\n}",
+  nix: '{ pkgs ? import <nixpkgs> {} }:\npkgs.mkShell { buildInputs = [ pkgs.nodejs ]; name = "dev"; }',
+  "objective-c":
+    "#import <Foundation/Foundation.h>\n@interface A : NSObject\n@property NSString *s;\n@end",
+  perl: 'my $s = "x";\nsub f { return $_[0] + 1; }\nprint $s;',
   php: '<?php $a = "x"; echo $a;',
+  powershell:
+    '$name = "world"\nfunction Get-Greeting { Write-Output "Hello $name" }',
+  prisma:
+    "model Post {\n  id    Int    @id @default(autoincrement())\n  title String\n}",
+  proto:
+    'syntax = "proto3";\nmessage Post {\n  int32 id = 1;\n  string title = 2;\n}',
   python: 'def f(x):\n    return "x"',
+  r: 'f <- function(x) {\n  paste("x", x)\n}\nprint(f(1))',
   ruby: 'def f\n  "x"\nend',
   rust: 'fn main() { let s = "x"; }',
+  scala: 'object Main {\n  def f(x: Int): String = "x" + x\n}',
+  scss: "$color: red;\n.a { color: $color; &:hover { margin: 0; } }",
   shell: 'echo "hi" | grep h\nexport A=1',
+  solidity: "pragma solidity ^0.8.0;\ncontract A {\n  uint256 public n = 1;\n}",
   sql: "SELECT id FROM posts WHERE id = 1;",
+  svelte:
+    "<script>\n  let count = 0;\n</script>\n<button on:click={() => count++}>{count}</button>",
   swift: 'func f() { let s = "x" }',
+  toml: '[package]\nname = "blog"\nversion = 1',
   tsx: 'const el: JSX.Element = <div className="a" />;',
   typescript: 'const a: number = 1; function f(): string { return "x"; }',
+  viml: 'let g:name = "x"\nfunction! F(x)\n  return a:x + 1\nendfunction',
+  vue: '<template>\n  <div :class="a">{{ msg }}</div>\n</template>\n<script setup lang="ts">\nconst msg = "hi";\n</script>',
   xml: '<?xml version="1.0"?><a b="c">d</a>',
   yaml: "key: value\nlist:\n  - 1",
+  zig: 'const std = @import("std");\npub fn main() void {\n  const s = "x";\n}',
 };
 
 async function highlightBlock(language: string, code: string) {
