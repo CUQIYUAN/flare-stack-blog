@@ -1,4 +1,5 @@
 import type { JSONContent } from "@tiptap/react";
+import { resolveCodeLanguage } from "@/lib/code-languages";
 
 export function codeBlockHighlightKey(language: unknown, code: string) {
   return `${String(language || "text")}\0${code}`;
@@ -16,13 +17,32 @@ function codeBlockKey(node: JSONContent) {
   return codeBlockHighlightKey(codeBlockLang(node), codeBlockText(node));
 }
 
+// Plain-text HTML comes in two shapes: the bare <pre><code> written when
+// highlighting throws, and Shiki's "text" output, which wraps each token in a
+// bare <span>. Grammar highlighting gives every token a style attribute, even
+// default-coloured ones, and escaped source text can never contain one.
+function isPlainTextHtml(html: string) {
+  if (html.startsWith("<pre><code>")) return true;
+  return html.startsWith('<pre class="shiki') && !html.includes("<span style=");
+}
+
+// HTML rendered as plain text because the language had no grammar then must
+// not outlive the language gaining one.
+function isReusable(node: JSONContent, html: string) {
+  return !(isPlainTextHtml(html) && resolveCodeLanguage(codeBlockLang(node)));
+}
+
 function collectHighlightedHtml(doc: JSONContent | null | undefined) {
   const map = new Map<string, Array<string>>();
 
   function walk(node: JSONContent) {
     if (node.type === "codeBlock") {
       const html = node.attrs?.highlightedHtml;
-      if (typeof html === "string" && html.length > 0) {
+      if (
+        typeof html === "string" &&
+        html.length > 0 &&
+        isReusable(node, html)
+      ) {
         const key = codeBlockKey(node);
         const list = map.get(key) ?? [];
         list.push(html);

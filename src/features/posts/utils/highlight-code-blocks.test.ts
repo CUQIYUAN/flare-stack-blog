@@ -1,5 +1,6 @@
 import type { JSONContent } from "@tiptap/react";
 import { describe, expect, it } from "vitest";
+import { fallbackCodeHtml } from "@/features/posts/utils/content";
 import { CODE_LANGUAGES } from "@/lib/code-languages";
 import { highlightSnapshotContent } from "./highlight-code-blocks";
 
@@ -93,6 +94,71 @@ describe("highlightSnapshotContent", () => {
     expect(result?.content?.[1]?.attrs?.highlightedHtml).toEqual(
       expect.stringContaining("shiki"),
     );
+  });
+
+  describe("when the snapshot holds plain-text HTML", () => {
+    const code = 'const a: number = 1; function f() { return "x"; }';
+
+    async function republish(language: string, snapshotHtml: string) {
+      const block = (attrs: Record<string, unknown>): JSONContent => ({
+        type: "doc",
+        content: [
+          {
+            type: "codeBlock",
+            attrs,
+            content: [{ type: "text", text: code }],
+          },
+        ],
+      });
+      const result = await highlightSnapshotContent(
+        block({ language }),
+        block({ language, highlightedHtml: snapshotHtml }),
+      );
+      return result?.content?.[0]?.attrs?.highlightedHtml as string;
+    }
+
+    it("re-highlights it once the language resolves to a grammar", async () => {
+      const plainText = await highlightBlock("text", code);
+
+      const html = await republish("ts", plainText);
+
+      expect(html).toBe(await highlightBlock("typescript", code));
+      expect(tokenColors(html).size).toBeGreaterThan(1);
+    });
+
+    it("re-highlights the error fallback once the language resolves to a grammar", async () => {
+      const html = await republish("typescript", fallbackCodeHtml(code));
+
+      expect(html).toBe(await highlightBlock("typescript", code));
+    });
+
+    it("keeps it while the language still has no grammar", async () => {
+      const plain = fallbackCodeHtml(code);
+
+      expect(await republish("not-a-language", plain)).toBe(plain);
+      expect(await republish("text", plain)).toBe(plain);
+    });
+  });
+
+  it("keeps grammar-highlighted snapshot HTML as it is", async () => {
+    const code = "const x = 1;";
+    const published = (await highlightBlock("ts", code)).replace(
+      'tabindex="0"',
+      'tabindex="0" data-published="earlier"',
+    );
+    const block = (attrs: Record<string, unknown>): JSONContent => ({
+      type: "doc",
+      content: [
+        { type: "codeBlock", attrs, content: [{ type: "text", text: code }] },
+      ],
+    });
+
+    const result = await highlightSnapshotContent(
+      block({ language: "ts" }),
+      block({ language: "ts", highlightedHtml: published }),
+    );
+
+    expect(result?.content?.[0]?.attrs?.highlightedHtml).toBe(published);
   });
 
   it.each(CODE_LANGUAGES.map((language) => language.id))(
