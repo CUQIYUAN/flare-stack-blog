@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import type { Editor, JSONContent } from "@tiptap/core";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it } from "vitest";
 import {
   createPostEditor,
   pressKey,
   typeText,
 } from "@/features/posts/editor/test-utils";
-import { getSlashMenu, setSlashMenuModalOpener } from ".";
+import { getMathEditor } from "@/features/posts/editor/extensions/math-editing";
+import { getSlashMenu } from ".";
 
 let editor: Editor | undefined;
 
@@ -133,15 +134,17 @@ it("inserts a 3×3 table with a header row in place of an empty line", () => {
   ]);
 });
 
-it("/公式 removes the typed text and opens the blockMath modal", () => {
-  const target = open("<p>a</p><p></p>", 4);
-  const openModal = vi.fn();
-  setSlashMenuModalOpener(target, openModal);
+it("/公式 puts block math in place of the line, open for editing", () => {
+  const target = open("<p>a</p><p></p><p>b</p>", 4);
   typeText(target, "/公式");
   pressKey(target, "Enter");
 
-  expect(openModal).toHaveBeenCalledExactlyOnceWith("blockMath");
-  expect(outline(target)).toEqual(['paragraph("a")', "paragraph"]);
+  expect(outline(target)).toEqual([
+    'paragraph("a")',
+    "blockMath",
+    'paragraph("b")',
+  ]);
+  expect(getMathEditor(target)).toMatchObject({ pos: 3, type: "block" });
 });
 
 it("inserts an image placeholder in place of the typed /图片", () => {

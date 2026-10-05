@@ -18,14 +18,10 @@ import {
 import { MERMAID } from "@/lib/code-languages";
 import { m } from "@/paraglide/messages";
 
-/** A modal the Editor component opens for an item without in-place UI yet. */
-export type SlashMenuModal = "blockMath";
-
 export interface SlashMenuItemContext {
   editor: Editor;
   /** The typed `/` and filter text, which the item replaces. */
   range: Range;
-  openModal: (modal: SlashMenuModal) => void;
 }
 
 export interface SlashMenuItem {
@@ -46,11 +42,6 @@ function replaceWith(
   insert: (chain: ReturnType<Editor["chain"]>) => ReturnType<Editor["chain"]>,
 ) {
   insert(editor.chain().focus().deleteRange(range)).run();
-}
-
-/** Removes the typed `/query`, for items that insert through a modal. */
-function deleteTypedQuery({ editor, range }: SlashMenuItemContext) {
-  editor.chain().focus().deleteRange(range).run();
 }
 
 function heading(level: 2 | 3 | 4, icon: LucideIcon, title: () => string) {
@@ -148,10 +139,9 @@ export const SLASH_MENU_ITEMS: ReadonlyArray<SlashMenuItem> = [
     title: m.editor_slash_block_math,
     keywords: ["块级公式", "公式", "数学", "math", "formula", "latex"],
     icon: SquareFunction,
-    run: (context) => {
-      deleteTypedQuery(context);
-      context.openModal("blockMath");
-    },
+    // No focus command: it would take focus back from the formula's input.
+    run: ({ editor, range }) =>
+      editor.chain().deleteRange(range).insertMath("block").run(),
   },
   {
     id: "image",
