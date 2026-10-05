@@ -6,23 +6,16 @@ import type {
   Editor as TiptapEditor,
 } from "@tiptap/react";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { setSlashMenuModalOpener } from "@/features/posts/editor/extensions/slash-menu";
 import { SlashMenuView } from "@/features/posts/editor/extensions/slash-menu/slash-menu-view";
 import { cn } from "@/lib/utils";
-import type { FormulaModalPayload } from "./formula-modal-store";
-import {
-  addFormulaModalOpener,
-  removeFormulaModalOpener,
-  setActiveFormulaModalOpenerKey,
-} from "./formula-modal-store";
 import EditorToolbar from "./ui/editor-toolbar";
-import type { FormulaMode } from "./ui/formula-modal";
-import { FormulaModal } from "./ui/formula-modal";
 import { ImageModal } from "./ui/image-modal";
 import { LinkEditorPopover } from "./ui/link-editor-popover";
 import { LinkHoverCard } from "./ui/link-hover-card";
+import { MathEditorPopover } from "./ui/math-editor-popover";
 import { TableBubbleMenu, TableMobileBar } from "./ui/table-bubble-menu";
 
 interface EditorProps {
@@ -52,14 +45,7 @@ export const Editor = memo(function Editor({
   scrollContainerId,
   toolbarClassName,
 }: EditorProps) {
-  const formulaOpenerKeyRef = useRef(Symbol("formula-modal-opener"));
   const [imageModalOpen, setImageModalOpen] = useState(false);
-  const [formulaModalOpen, setFormulaModalOpen] = useState(false);
-  const [formulaPayload, setFormulaPayload] = useState<{
-    mode: FormulaMode;
-    initialLatex: string;
-    editContext: { pos: number; type: FormulaMode } | null;
-  }>({ mode: "inline", initialLatex: "", editContext: null });
 
   const editor = useEditor({
     extensions,
@@ -90,16 +76,7 @@ export const Editor = memo(function Editor({
     setImageModalOpen(true);
   }, []);
 
-  const openFormulaModal = useCallback((mode: FormulaMode) => {
-    setFormulaPayload({
-      mode,
-      initialLatex: mode === "inline" ? "x^2+y^2=z^2" : "E = mc^2",
-      editContext: null,
-    });
-    setFormulaModalOpen(true);
-  }, []);
-
-  // The slash menu's image and formula items open these modals for now.
+  // The slash menu's image item opens the image modal for now.
   useEffect(() => {
     if (!editor || !editable) return;
     return setSlashMenuModalOpener(editor, (modal) => {
@@ -107,79 +84,11 @@ export const Editor = memo(function Editor({
         case "image":
           openImageModal();
           return;
-        case "blockMath":
-          openFormulaModal("block");
-          return;
         default:
           modal satisfies never;
       }
     });
-  }, [editor, editable, openImageModal, openFormulaModal]);
-
-  useEffect(() => {
-    if (!editable) return;
-
-    const opener = (payload: FormulaModalPayload) => {
-      setFormulaPayload({
-        mode: payload.type,
-        initialLatex: payload.latex,
-        editContext: { pos: payload.pos, type: payload.type },
-      });
-      setFormulaModalOpen(true);
-    };
-    addFormulaModalOpener(formulaOpenerKeyRef.current, opener);
-    return () => removeFormulaModalOpener(formulaOpenerKeyRef.current);
-  }, [editable]);
-
-  const markActiveFormulaOpener = useCallback(() => {
-    if (!editable) return;
-    setActiveFormulaModalOpenerKey(formulaOpenerKeyRef.current);
-  }, [editable]);
-
-  const handleFormulaApply = useCallback(
-    (
-      latex: string,
-      mode: FormulaMode,
-      editContext: { pos: number; type: FormulaMode } | null,
-    ) => {
-      if (!editor) return;
-      if (editContext && editContext.type !== mode) {
-        const chain = editor
-          .chain()
-          .setNodeSelection(editContext.pos)
-          .deleteSelection();
-        if (mode === "inline") {
-          chain.insertInlineMath({ latex }).focus().run();
-        } else {
-          chain.insertBlockMath({ latex }).focus().run();
-        }
-      } else if (editContext) {
-        if (editContext.type === "inline") {
-          editor
-            .chain()
-            .setNodeSelection(editContext.pos)
-            .updateInlineMath({ latex })
-            .focus()
-            .run();
-        } else {
-          editor
-            .chain()
-            .setNodeSelection(editContext.pos)
-            .updateBlockMath({ latex })
-            .focus()
-            .run();
-        }
-      } else {
-        if (mode === "inline") {
-          editor.chain().focus().insertInlineMath({ latex }).run();
-        } else {
-          editor.chain().focus().insertBlockMath({ latex }).run();
-        }
-      }
-      setFormulaModalOpen(false);
-    },
-    [editor],
-  );
+  }, [editor, editable, openImageModal]);
 
   return (
     <div className={cn("relative flex flex-col group", className)}>
@@ -189,8 +98,8 @@ export const Editor = memo(function Editor({
           className={toolbarClassName}
           onLinkClick={() => editor?.commands.openLinkEditor()}
           onImageClick={openImageModal}
-          onFormulaInlineClick={() => openFormulaModal("inline")}
-          onFormulaBlockClick={() => openFormulaModal("block")}
+          onFormulaInlineClick={() => editor?.commands.insertMath("inline")}
+          onFormulaBlockClick={() => editor?.commands.insertMath("block")}
         />
       )}
 
@@ -199,12 +108,11 @@ export const Editor = memo(function Editor({
       {editable && <SlashMenuView editor={editor} />}
       {editable && <LinkEditorPopover editor={editor} />}
       {editable && <LinkHoverCard editor={editor} />}
+      {editable && <MathEditorPopover editor={editor} />}
 
       <div
         id={scrollContainerId}
         className={cn("relative", documentClassName ?? "min-h-125")}
-        onMouseDownCapture={markActiveFormulaOpener}
-        onFocusCapture={markActiveFormulaOpener}
       >
         {documentHeader}
         <EditorContent editor={editor} />
@@ -218,18 +126,6 @@ export const Editor = memo(function Editor({
           onSelect={(image) => {
             editor?.chain().focus().setImage(image).run();
           }}
-        />
-      )}
-
-      {editable && (
-        <FormulaModal
-          returnFocus={() => editor?.view.dom ?? null}
-          isOpen={formulaModalOpen}
-          mode={formulaPayload.mode}
-          initialLatex={formulaPayload.initialLatex}
-          editContext={formulaPayload.editContext}
-          onClose={() => setFormulaModalOpen(false)}
-          onApply={handleFormulaApply}
         />
       )}
     </div>

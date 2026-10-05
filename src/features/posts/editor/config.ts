@@ -1,15 +1,11 @@
 import FileHandler from "@tiptap/extension-file-handler";
-import Mathematics from "@tiptap/extension-mathematics";
 import Placeholder from "@tiptap/extension-placeholder";
 import type { Editor as TiptapEditor } from "@tiptap/react";
 import { toast } from "sonner";
-import {
-  getActiveFormulaModalOpenerKey,
-  openFormulaModalForEdit,
-} from "@/components/tiptap-editor/formula-modal-store";
 import { CodeBlockExtension } from "@/features/posts/editor/extensions/code-block";
 import { ImageExtension } from "@/features/posts/editor/extensions/images";
 import { MarkdownPaste } from "@/features/posts/editor/extensions/markdown-paste";
+import { MathEditing } from "@/features/posts/editor/extensions/math-editing";
 import { createSchemaExtensions } from "@/features/posts/editor/schema";
 import { LinkEditing } from "@/features/posts/editor/extensions/link-editing";
 import { SlashMenu } from "@/features/posts/editor/extensions/slash-menu";
@@ -53,46 +49,16 @@ function handleFilePaste(editor: TiptapEditor, files: Array<File>) {
   });
 }
 
-function createEditorSchema(mathClick: boolean) {
-  return createSchemaExtensions({
-    codeBlock: CodeBlockExtension,
-    image: ImageExtension,
-    mathematics: [
-      Mathematics.configure({
-        katexOptions: { throwOnError: false },
-        ...(mathClick
-          ? {
-              inlineOptions: {
-                onClick: (node, pos) => {
-                  openFormulaModalForEdit({
-                    latex: node.attrs.latex ?? "",
-                    pos,
-                    type: "inline",
-                    instanceKey: getActiveFormulaModalOpenerKey() ?? undefined,
-                  });
-                },
-              },
-              blockOptions: {
-                onClick: (node, pos) => {
-                  openFormulaModalForEdit({
-                    latex: node.attrs.latex ?? "",
-                    pos,
-                    type: "block",
-                    instanceKey: getActiveFormulaModalOpenerKey() ?? undefined,
-                  });
-                },
-              },
-            }
-          : {}),
-      }),
-    ],
-  });
-}
+const editorSchema = createSchemaExtensions({
+  codeBlock: CodeBlockExtension,
+  image: ImageExtension,
+  mathematics: [MathEditing],
+});
 
-export const inspectExtensions = createEditorSchema(false);
+export const inspectExtensions = editorSchema;
 
 export const extensions = [
-  ...createEditorSchema(true),
+  ...editorSchema,
   Placeholder.configure({
     placeholder: m.editor_content_placeholder(),
     emptyEditorClass: "is-editor-empty",

@@ -172,8 +172,8 @@ export function pickSlashMenuItem(editor: Editor, index: number) {
 }
 
 /**
- * Lets the `Editor` component open its modals for the image and block
- * formula items until those have in-place editing. Returns a cleanup.
+ * Lets the `Editor` component open its modal for the image item until that
+ * has in-place editing. Returns a cleanup.
  */
 export function setSlashMenuModalOpener(
   editor: Editor,

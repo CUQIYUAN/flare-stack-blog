@@ -8,6 +8,7 @@ import { flattenExtensions, getExtensionField } from "@tiptap/core";
 import { MarkdownManager } from "@tiptap/markdown";
 import type { marked } from "marked";
 import { Marked } from "marked";
+import { INLINE_MATH } from "@/features/posts/editor/extensions/math-editing/syntax";
 import { createSchemaExtensions } from "@/features/posts/editor/schema";
 
 const MIN_HEADING_LEVEL = 2;
@@ -15,9 +16,6 @@ const MAX_HEADING_LEVEL = 4;
 
 const FRONT_MATTER = /^﻿?---\r?\n[\s\S]*?\r?\n(?:---|\.\.\.)[ \t]*(?:\r?\n|$)/;
 
-// Pandoc's rule: no space after the opening `$`, none before the closing `$`,
-// and no digit right after it, so "$5 to $10" stays text.
-const INLINE_MATH = /^\$(?![\s$])((?:\\[\s\S]|[^\\$])+?)(?<![\s\\])\$(?!\d)/;
 const BLOCK_MATH = /^ {0,3}\$\$([\s\S]+?)\$\$[ \t]*(?:\n+|$)/;
 const BLOCK_MATH_START = /(?:^|\n)(?= {0,3}\$\$)/;
 

@@ -6,6 +6,7 @@ import {
   pressKey,
   typeText,
 } from "@/features/posts/editor/test-utils";
+import { getMathEditor } from "@/features/posts/editor/extensions/math-editing";
 import { getSlashMenu, setSlashMenuModalOpener } from ".";
 
 let editor: Editor | undefined;
@@ -133,22 +134,29 @@ it("inserts a 3×3 table with a header row in place of an empty line", () => {
   ]);
 });
 
-it.each([
-  ["公式", "blockMath"],
-  ["image", "image"],
-] as const)(
-  "/%s removes the typed text and opens the %s modal",
-  (query, modal) => {
-    const target = open("<p>a</p><p></p>", 4);
-    const openModal = vi.fn();
-    setSlashMenuModalOpener(target, openModal);
-    typeText(target, `/${query}`);
-    pressKey(target, "Enter");
+it("/image removes the typed text and opens the image modal", () => {
+  const target = open("<p>a</p><p></p>", 4);
+  const openModal = vi.fn();
+  setSlashMenuModalOpener(target, openModal);
+  typeText(target, "/image");
+  pressKey(target, "Enter");
 
-    expect(openModal).toHaveBeenCalledExactlyOnceWith(modal);
-    expect(outline(target)).toEqual(['paragraph("a")', "paragraph"]);
-  },
-);
+  expect(openModal).toHaveBeenCalledExactlyOnceWith("image");
+  expect(outline(target)).toEqual(['paragraph("a")', "paragraph"]);
+});
+
+it("/公式 puts block math in place of the line, open for editing", () => {
+  const target = open("<p>a</p><p></p><p>b</p>", 4);
+  typeText(target, "/公式");
+  pressKey(target, "Enter");
+
+  expect(outline(target)).toEqual([
+    'paragraph("a")',
+    "blockMath",
+    'paragraph("b")',
+  ]);
+  expect(getMathEditor(target)).toMatchObject({ pos: 3, type: "block" });
+});
 
 it("moves the active item with the arrow keys, wrapping around", () => {
   const target = open("<p>Title</p>", 1);
