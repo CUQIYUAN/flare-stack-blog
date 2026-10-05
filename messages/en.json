@@ -489,6 +489,7 @@
   "common_view_full_image": "View full image",
   "common_untitled": "Untitled",
   "common_plain_text": "Plain Text",
+  "common_mermaid_render_failed": "Mermaid diagram failed to render",
   "common_modal_state_confirm": "Confirm",
   "common_modal_state_danger": "Danger",
   "theme_light": "Light",

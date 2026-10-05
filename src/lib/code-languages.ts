@@ -27,6 +27,9 @@ export function isPlainTextLanguage(name: string | null | undefined) {
   return plainTextNames.has(name.trim().toLowerCase());
 }
 
+/** The language id of code blocks rendered as Mermaid diagrams (ADR 0027). */
+export const MERMAID = "mermaid";
+
 // Shiki language modules export `default` as an array of LanguageRegistration
 export type CodeLanguageModule = { default: Array<LanguageRegistration> };
 
@@ -378,6 +381,12 @@ export const CODE_LANGUAGES: ReadonlyArray<CodeLanguage> = [
     load: () => import("shiki/langs/solidity.mjs"),
   },
   {
+    id: MERMAID,
+    label: "Mermaid",
+    aliases: [],
+    load: () => import("shiki/langs/mermaid.mjs"),
+  },
+  {
     id: "prisma",
     label: "Prisma",
     aliases: [],
@@ -401,4 +410,9 @@ export function resolveCodeLanguage(
 ): CodeLanguage | undefined {
   if (!name) return undefined;
   return byName.get(name.trim().toLowerCase());
+}
+
+/** Whether a code block's language string (any case) is Mermaid. */
+export function isMermaidLanguage(name: string | null | undefined) {
+  return resolveCodeLanguage(name)?.id === MERMAID;
 }

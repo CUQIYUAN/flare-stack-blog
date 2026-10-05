@@ -39,6 +39,7 @@ const SAMPLES: Record<string, string> = {
   make: "CC = gcc\nall: main.o\n\t$(CC) -o app main.o",
   markdown: "# Title\n\n**bold** and `code`",
   matlab: "function y = f(x)\n  y = x .^ 2; % square\nend",
+  mermaid: 'flowchart LR\n  A["Draft"] -->|publish| B(Published)\n  %% comment',
   nginx:
     "server {\n  listen 80;\n  location / { proxy_pass http://127.0.0.1:3000; }\n}",
   nix: '{ pkgs ? import <nixpkgs> {} }:\npkgs.mkShell { buildInputs = [ pkgs.nodejs ]; name = "dev"; }',

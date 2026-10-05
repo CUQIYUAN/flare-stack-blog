@@ -117,6 +117,19 @@ describe("parsePastedMarkdown", () => {
     ]);
   });
 
+  it("turns a mermaid fence into a mermaid code block", () => {
+    const { content } = parsePastedMarkdown(
+      "```mermaid\nflowchart LR\n  A --> B\n```",
+    );
+    expect(content).toEqual([
+      {
+        type: "codeBlock",
+        attrs: { language: "mermaid" },
+        content: [text("flowchart LR\n  A --> B")],
+      },
+    ]);
+  });
+
   it("keeps the text of HTML tags the editor does not know", () => {
     const { content } = parsePastedMarkdown("H<sub>2</sub>O");
     expect(content).toEqual([{ type: "paragraph", content: [text("H2O")] }]);
