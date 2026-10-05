@@ -74,7 +74,11 @@ it("hands mermaid code blocks to MermaidDiagram, showing the highlighted source 
 
   expect(container.querySelector("pre.shiki")).not.toBeNull();
   expect(await screen.findByTestId("diagram")).toBeDefined();
-  expect(mermaid.render).toHaveBeenCalledWith(expect.any(String), SOURCE);
+  expect(mermaid.render).toHaveBeenCalledWith(
+    expect.any(String),
+    SOURCE,
+    expect.any(HTMLElement),
+  );
   expect(container.querySelector("pre.shiki")).toBeNull();
 });
 
@@ -101,5 +105,9 @@ it("renders Mermaid diagrams in a post that also has math", async () => {
   );
 
   expect(await screen.findByTestId("diagram")).toBeDefined();
-  expect(mermaid.render).toHaveBeenCalledWith(expect.any(String), SOURCE);
+  expect(mermaid.render).toHaveBeenCalledWith(
+    expect.any(String),
+    SOURCE,
+    expect.any(HTMLElement),
+  );
 });
