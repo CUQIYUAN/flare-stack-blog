@@ -111,8 +111,16 @@ export const Editor = memo(function Editor({
   useEffect(() => {
     if (!editor || !editable) return;
     return setSlashMenuModalOpener(editor, (modal) => {
-      if (modal === "image") openImageModal();
-      else openFormulaModal("block");
+      switch (modal) {
+        case "image":
+          openImageModal();
+          return;
+        case "blockMath":
+          openFormulaModal("block");
+          return;
+        default:
+          modal satisfies never;
+      }
     });
   }, [editor, editable, openImageModal, openFormulaModal]);
 
