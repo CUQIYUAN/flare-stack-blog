@@ -57,36 +57,32 @@ const NO_FORMATS = {
   strike: false,
   code: false,
   link: false,
-  canMath: false,
 };
 
 function MenuButton({
   icon: Icon,
   label,
   active,
-  disabled = false,
   onClick,
 }: {
   icon: LucideIcon;
   label: string;
   /** Set for the toggles; the formula button is an action. */
   active?: boolean;
-  disabled?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
       aria-label={label}
       aria-pressed={active}
       title={label}
       className={clsx(
-        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg disabled:opacity-40",
+        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
         active
           ? "bg-(--fuwari-btn-regular-bg) text-(--fuwari-primary)"
-          : "fuwari-text-50 enabled:hover:bg-(--fuwari-btn-regular-bg) enabled:hover:text-(--fuwari-primary)",
+          : "fuwari-text-50 hover:bg-(--fuwari-btn-regular-bg) hover:text-(--fuwari-primary)",
       )}
     >
       <Icon size={14} strokeWidth={active ? 2.5 : 2} />
@@ -111,7 +107,6 @@ export function SelectionBubbleMenu({ editor }: { editor: Editor | null }) {
               strike: current.isActive("strike"),
               code: current.isActive("code"),
               link: current.isActive("link"),
-              canMath: current.can().setInlineMathFromSelection(),
             }
           : null,
     }) ?? NO_FORMATS;
@@ -190,10 +185,8 @@ export function SelectionBubbleMenu({ editor }: { editor: Editor | null }) {
           <MenuButton
             icon={Sigma}
             label={m.editor_bubble_menu_inline_math()}
-            disabled={!state.canMath}
-            onClick={() =>
-              editor.chain().focus().setInlineMathFromSelection().run()
-            }
+            // Opens the formula for editing, which takes focus itself.
+            onClick={() => editor.commands.insertMath("inline")}
           />
         </div>
       )}

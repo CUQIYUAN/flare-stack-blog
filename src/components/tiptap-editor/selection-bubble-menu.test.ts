@@ -154,7 +154,7 @@ it("opens the in-place link input from the link button", async () => {
   expect(link?.getAttribute("href")).toBe("https://example.com");
 });
 
-it("turns the selected text into an inline formula", async () => {
+it("turns the selected text into an inline formula, open for editing", async () => {
   const { editor } = await renderPostEditor({
     content: "<p>so E=mc^2 holds</p>",
   });
@@ -168,4 +168,6 @@ it("turns the selected text into an inline formula", async () => {
   const math = editor.state.doc.firstChild?.child(1);
   expect(math?.type.name).toBe("inlineMath");
   expect(math?.attrs.latex).toBe("E=mc^2");
+  const input = await screen.findByRole("textbox", { name: "LaTeX" });
+  expect((input as HTMLTextAreaElement).value).toBe("E=mc^2");
 });
