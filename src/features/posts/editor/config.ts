@@ -50,13 +50,12 @@ function handleFilePaste(editor: TiptapEditor, files: Array<File>) {
   });
 }
 
-const editorSchema = createSchemaExtensions({
+/** The post schema, which the read-only revision view renders with alone. */
+export const editorSchema = createSchemaExtensions({
   codeBlock: CodeBlockExtension,
   image: ImageExtension,
   mathematics: [MathEditing],
 });
-
-export const inspectExtensions = editorSchema;
 
 export const extensions = [
   ...editorSchema,
