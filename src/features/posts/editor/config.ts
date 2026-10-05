@@ -9,6 +9,7 @@ import {
 } from "@/components/tiptap-editor/formula-modal-store";
 import { CodeBlockExtension } from "@/features/posts/editor/extensions/code-block";
 import { ImageExtension } from "@/features/posts/editor/extensions/images";
+import { MarkdownPaste } from "@/features/posts/editor/extensions/markdown-paste";
 import { createSchemaExtensions } from "@/features/posts/editor/schema";
 import type { ImageUploadResult } from "@/features/posts/editor/extensions/upload-image";
 import { ImageUpload } from "@/features/posts/editor/extensions/upload-image";
@@ -106,5 +107,10 @@ export const extensions = [
     allowedMimeTypes: ALLOWED_IMAGE_MIME_TYPES,
     onDrop: handleFileDrop,
     onPaste: handleFilePaste,
+  }),
+  MarkdownPaste.configure({
+    onLocalImages: (count) => {
+      toast.warning(m.editor_markdown_paste_local_images({ count }));
+    },
   }),
 ];

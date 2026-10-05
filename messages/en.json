@@ -745,6 +745,7 @@
   "editor_action_tags_error": "Failed to generate tags",
   "editor_action_unknown_error": "Unknown error",
   "editor_image_upload_failed": "Upload failed",
+  "editor_markdown_paste_local_images": "{count} local images could not be pasted. Upload them manually.",
   "editor_image_upload_success_desc": "Uploaded",
   "editor_image_caption_placeholder": "Add a caption...",
   "editor_toolbar_heading2": "Heading 2",

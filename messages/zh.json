@@ -738,6 +738,7 @@
   "editor_action_tags_error": "生成标签失败",
   "editor_action_unknown_error": "未知错误",
   "editor_image_upload_failed": "上传失败",
+  "editor_markdown_paste_local_images": "{count} 张本地图片无法随粘贴导入，请手动上传",
   "editor_image_upload_success_desc": "上传成功",
   "editor_image_caption_placeholder": "图片说明...",
   "editor_toolbar_heading2": "二级标题",
