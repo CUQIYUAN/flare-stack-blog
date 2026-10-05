@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type { AppTheme } from "@/components/common/theme-provider";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import { renderMermaid } from "./mermaid-render";
@@ -14,7 +15,7 @@ export interface MermaidDiagramProps {
   /** Mermaid source of the code block. */
   source: string;
   /** Current site theme; the diagram re-renders with its colours when it changes. */
-  theme: "light" | "dark";
+  theme: AppTheme;
   /**
    * Shown until the diagram renders, and kept when rendering fails.
    * Defaults to the source as plain text.

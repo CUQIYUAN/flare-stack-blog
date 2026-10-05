@@ -1,3 +1,5 @@
+import type { AppTheme } from "@/components/common/theme-provider";
+
 /**
  * Mermaid `themeVariables` for the `base` theme, taken from the Fuwari design
  * tokens in effect on the diagram's element (ADR 0021), so diagrams follow the
@@ -22,7 +24,7 @@ const COLOR_TOKENS = {
 
 export function mermaidThemeVariables(
   element: Element | null,
-  theme: "light" | "dark",
+  theme: AppTheme,
 ): Record<string, string | boolean> {
   const variables: Record<string, string | boolean> = {
     darkMode: theme === "dark",

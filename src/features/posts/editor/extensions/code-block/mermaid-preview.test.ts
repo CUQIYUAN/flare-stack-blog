@@ -11,6 +11,7 @@ import {
 import { Editor, EditorContent } from "@tiptap/react";
 import { createElement } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import type { AppTheme } from "@/components/common/theme-provider";
 import { createSchemaExtensions } from "@/features/posts/editor/schema";
 import { CodeBlockExtension } from ".";
 
@@ -26,7 +27,7 @@ const mermaid = vi.hoisted(() => ({
 
 vi.mock("mermaid", () => ({ default: mermaid }));
 
-const theme = vi.hoisted(() => ({ appTheme: "light" as "light" | "dark" }));
+const theme = vi.hoisted(() => ({ appTheme: "light" as AppTheme }));
 
 vi.mock("@/components/common/theme-provider", () => ({
   useTheme: () => theme,
