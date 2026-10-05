@@ -173,6 +173,19 @@ it("turns the selected text into inline math, open for editing", () => {
   });
 });
 
+it("gives the selected text back when its formula is cancelled", () => {
+  const target = open("<p>so E=mc^2 holds</p>");
+  target.commands.setTextSelection({ from: 4, to: 10 });
+  target.commands.insertMath("inline");
+  expect(outline(target)).toEqual([
+    'paragraph("so " inlineMath("E=mc^2") " holds")',
+  ]);
+
+  expect(target.commands.closeMathEditor()).toBe(true);
+  expect(outline(target)).toEqual(['paragraph("so E=mc^2 holds")']);
+  expect(getMathEditor(target)).toBeNull();
+});
+
 it("inserts an empty formula for editing and drops it on cancel", () => {
   const target = open("<p>ab</p>", 2);
   target.commands.insertMath("inline");

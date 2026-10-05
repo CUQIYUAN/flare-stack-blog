@@ -1,4 +1,5 @@
 import type { Editor } from "@tiptap/core";
+import type { Step } from "@tiptap/pm/transform";
 import { useCallback, useSyncExternalStore } from "react";
 
 export type MathType = "inline" | "block";
@@ -10,8 +11,13 @@ export interface MathEditorState {
   type: MathType;
   /** Its LaTeX as it was when editing opened. */
   latex: string;
-  /** Whether it was just inserted; cancelling removes it then. */
+  /** Whether it was just inserted; cancelling takes the insertion back then. */
   inserted: boolean;
+  /**
+   * The steps that take the insertion back, giving back the text it replaced:
+   * empty unless `inserted`.
+   */
+  revert: readonly Step[];
 }
 
 export interface MathEditingStorage {

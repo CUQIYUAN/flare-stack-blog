@@ -4,6 +4,8 @@ import { BlockMath, InlineMath } from "@tiptap/extension-mathematics";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
+import type { Mappable, Step } from "@tiptap/pm/transform";
+import { Transform } from "@tiptap/pm/transform";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import type { KatexOptions } from "katex";
 import { BlockMathView } from "./block-math-view";
@@ -158,6 +160,26 @@ function findNode(tr: Transaction, node: PMNode) {
   return found;
 }
 
+/** The steps that undo `tr`'s steps from `start` on, in the order to apply. */
+function revertSteps(tr: Transaction, start: number) {
+  const steps: Step[] = [];
+  for (let index = tr.steps.length - 1; index >= start; index--) {
+    steps.push(tr.steps[index].invert(tr.docs[index]));
+  }
+  return steps;
+}
+
+/** `steps` mapped through `mapping`; none once one of them no longer fits. */
+function mapSteps(steps: readonly Step[], mapping: Mappable) {
+  const mapped: Step[] = [];
+  for (const step of steps) {
+    const next = step.map(mapping);
+    if (!next) return [];
+    mapped.push(next);
+  }
+  return mapped;
+}
+
 /** Selects the formula at `pos`: the cursor after inline math, block math whole. */
 function selectFormula(tr: Transaction, pos: number) {
   const node = tr.doc.nodeAt(pos);
@@ -209,6 +231,7 @@ export const MathEditing = Extension.create<
           if (!editor.isEditable || !storage || !nodeType) return false;
           if (!dispatch) return true;
 
+          const start = tr.steps.length;
           const { from, to, empty, $from } = tr.selection;
           const text = (latex ?? tr.doc.textBetween(from, to, " ")).trim();
           const node = nodeType.create({ latex: text });
@@ -233,7 +256,13 @@ export const MathEditing = Extension.create<
           if (pos < 0) return false;
           selectFormula(tr, pos);
           tr.setMeta(META, {
-            state: { pos, type, latex: text, inserted: true },
+            state: {
+              pos,
+              type,
+              latex: text,
+              inserted: true,
+              revert: revertSteps(tr, start),
+            },
           });
           return true;
         },
@@ -252,6 +281,7 @@ export const MathEditing = Extension.create<
                 type,
                 latex: String(node?.attrs.latex ?? ""),
                 inserted: false,
+                revert: [],
               },
             });
           }
@@ -294,7 +324,15 @@ export const MathEditing = Extension.create<
           if (!dispatch) return true;
           tr.setMeta(META, { state: null });
           const node = tr.doc.nodeAt(open.pos);
-          if (open.inserted && node && mathTypeOf(node)) {
+          if (!open.inserted || !mathTypeOf(node)) return true;
+          // Give back what the formula replaced, or else just remove it.
+          const reverted = new Transform(tr.doc);
+          const restored =
+            open.revert.length > 0 &&
+            open.revert.every((step) => !reverted.maybeStep(step).failed);
+          if (restored) {
+            for (const step of reverted.steps) tr.step(step);
+          } else if (node) {
             tr.delete(open.pos, open.pos + node.nodeSize);
           }
           return true;
@@ -320,8 +358,12 @@ export const MathEditing = Extension.create<
       !mathTypeOf(transaction.doc.nodeAt(mapped.pos))
     ) {
       setState(storage, null);
-    } else if (mapped.pos !== open.pos) {
-      setState(storage, { ...open, pos: mapped.pos });
+    } else if (mapped.pos !== open.pos || open.revert.length > 0) {
+      setState(storage, {
+        ...open,
+        pos: mapped.pos,
+        revert: mapSteps(open.revert, transaction.mapping),
+      });
     }
   },
 });
