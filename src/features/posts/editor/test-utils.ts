@@ -43,6 +43,11 @@ function installDomShims() {
   HTMLDialogElement.prototype.close ??= function (this: HTMLDialogElement) {
     this.open = false;
   };
+  // Popovers anchored to the selection measure text ranges; jsdom lays out
+  // nothing, so every range is an empty rectangle at the origin.
+  Range.prototype.getBoundingClientRect ??= () => new DOMRect();
+  Range.prototype.getClientRects ??= () =>
+    Object.assign([], { item: () => null }) as unknown as DOMRectList;
 }
 
 /**

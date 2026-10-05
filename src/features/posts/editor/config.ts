@@ -11,6 +11,7 @@ import { CodeBlockExtension } from "@/features/posts/editor/extensions/code-bloc
 import { ImageExtension } from "@/features/posts/editor/extensions/images";
 import { MarkdownPaste } from "@/features/posts/editor/extensions/markdown-paste";
 import { createSchemaExtensions } from "@/features/posts/editor/schema";
+import { LinkEditing } from "@/features/posts/editor/extensions/link-editing";
 import { SlashMenu } from "@/features/posts/editor/extensions/slash-menu";
 import type { ImageUploadResult } from "@/features/posts/editor/extensions/upload-image";
 import { ImageUpload } from "@/features/posts/editor/extensions/upload-image";
@@ -110,6 +111,7 @@ export const extensions = [
     onPaste: handleFilePaste,
   }),
   SlashMenu,
+  LinkEditing,
   MarkdownPaste.configure({
     onLocalImages: (count) => {
       toast.warning(m.editor_markdown_paste_local_images({ count }));

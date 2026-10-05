@@ -10,7 +10,6 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { setSlashMenuModalOpener } from "@/features/posts/editor/extensions/slash-menu";
 import { SlashMenuView } from "@/features/posts/editor/extensions/slash-menu/slash-menu-view";
-import { normalizeLinkHref } from "@/lib/links/normalize-link-href";
 import { cn } from "@/lib/utils";
 import type { FormulaModalPayload } from "./formula-modal-store";
 import {
@@ -21,8 +20,9 @@ import {
 import EditorToolbar from "./ui/editor-toolbar";
 import type { FormulaMode } from "./ui/formula-modal";
 import { FormulaModal } from "./ui/formula-modal";
-import type { ModalType } from "./ui/insert-modal";
-import InsertModal from "./ui/insert-modal";
+import { ImageModal } from "./ui/image-modal";
+import { LinkEditorPopover } from "./ui/link-editor-popover";
+import { LinkHoverCard } from "./ui/link-hover-card";
 import { TableBubbleMenu, TableMobileBar } from "./ui/table-bubble-menu";
 
 interface EditorProps {
@@ -53,8 +53,7 @@ export const Editor = memo(function Editor({
   toolbarClassName,
 }: EditorProps) {
   const formulaOpenerKeyRef = useRef(Symbol("formula-modal-opener"));
-  const [modalOpen, setModalOpen] = useState<ModalType>(null);
-  const [modalInitialUrl, setModalInitialUrl] = useState("");
+  const [imageModalOpen, setImageModalOpen] = useState(false);
   const [formulaModalOpen, setFormulaModalOpen] = useState(false);
   const [formulaPayload, setFormulaPayload] = useState<{
     mode: FormulaMode;
@@ -87,15 +86,8 @@ export const Editor = memo(function Editor({
     immediatelyRender: false,
   });
 
-  const openLinkModal = useCallback(() => {
-    const previousUrl = editor?.getAttributes("link").href;
-    setModalInitialUrl(previousUrl || "");
-    setModalOpen("LINK");
-  }, [editor]);
-
   const openImageModal = useCallback(() => {
-    setModalInitialUrl("");
-    setModalOpen("IMAGE");
+    setImageModalOpen(true);
   }, []);
 
   const openFormulaModal = useCallback((mode: FormulaMode) => {
@@ -189,37 +181,13 @@ export const Editor = memo(function Editor({
     [editor],
   );
 
-  const handleModalSubmit = (
-    url: string,
-    attrs?: { width?: number; height?: number },
-  ) => {
-    if (modalOpen === "LINK") {
-      if (url === "") {
-        editor?.chain().focus().extendMarkRange("link").unsetLink().run();
-      } else {
-        const href = normalizeLinkHref(url);
-        editor?.chain().focus().extendMarkRange("link").setLink({ href }).run();
-      }
-    } else if (modalOpen === "IMAGE") {
-      if (url) {
-        editor
-          ?.chain()
-          .focus()
-          .setImage({ src: url, ...attrs })
-          .run();
-      }
-    }
-
-    setModalOpen(null);
-  };
-
   return (
     <div className={cn("relative flex flex-col group", className)}>
       {editable && (
         <EditorToolbar
           editor={editor}
           className={toolbarClassName}
-          onLinkClick={openLinkModal}
+          onLinkClick={() => editor?.commands.openLinkEditor()}
           onImageClick={openImageModal}
           onFormulaInlineClick={() => openFormulaModal("inline")}
           onFormulaBlockClick={() => openFormulaModal("block")}
@@ -229,6 +197,8 @@ export const Editor = memo(function Editor({
       {editable && <TableBubbleMenu editor={editor} />}
       {editable && <TableMobileBar editor={editor} />}
       {editable && <SlashMenuView editor={editor} />}
+      {editable && <LinkEditorPopover editor={editor} />}
+      {editable && <LinkHoverCard editor={editor} />}
 
       <div
         id={scrollContainerId}
@@ -241,12 +211,13 @@ export const Editor = memo(function Editor({
       </div>
 
       {editable && (
-        <InsertModal
+        <ImageModal
+          open={imageModalOpen}
           returnFocus={() => editor?.view.dom ?? null}
-          type={modalOpen}
-          initialUrl={modalInitialUrl}
-          onClose={() => setModalOpen(null)}
-          onSubmit={handleModalSubmit}
+          onClose={() => setImageModalOpen(false)}
+          onSelect={(image) => {
+            editor?.chain().focus().setImage(image).run();
+          }}
         />
       )}
 
