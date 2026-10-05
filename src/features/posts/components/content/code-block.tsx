@@ -1,37 +1,8 @@
 import { Check, ChevronDown, Copy } from "lucide-react";
 import { memo, useLayoutEffect, useRef, useState } from "react";
+import { resolveCodeLanguage } from "@/lib/code-languages";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
-
-// Map short codes to display labels
-const LANGUAGE_MAP: Record<string, string> = {
-  ts: "TypeScript",
-  typescript: "TypeScript",
-  js: "JavaScript",
-  javascript: "JavaScript",
-  jsx: "JSX",
-  tsx: "TSX",
-  py: "Python",
-  python: "Python",
-  rb: "Ruby",
-  ruby: "Ruby",
-  go: "Go",
-  rs: "Rust",
-  rust: "Rust",
-  java: "Java",
-  cpp: "C++",
-  c: "C",
-  php: "PHP",
-  css: "CSS",
-  html: "HTML",
-  json: "JSON",
-  yaml: "YAML",
-  xml: "XML",
-  sql: "SQL",
-  sh: "sh",
-  bash: "bash",
-  md: "Markdown",
-};
 
 interface CodeBlockProps {
   code: string;
@@ -72,7 +43,7 @@ export const CodeBlock = memo(
     const displayLanguage = normalizedLanguage
       ? normalizedLanguage === "text" || normalizedLanguage === "txt"
         ? m.common_plain_text()
-        : LANGUAGE_MAP[normalizedLanguage] || normalizedLanguage
+        : (resolveCodeLanguage(normalizedLanguage)?.label ?? normalizedLanguage)
       : m.common_plain_text();
 
     const handleCopy = () => {
