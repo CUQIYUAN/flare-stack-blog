@@ -3,7 +3,6 @@ import type { Editor } from "@tiptap/react";
 import { useEditorState } from "@tiptap/react";
 import type { BubbleMenuProps } from "@tiptap/react/menus";
 import { BubbleMenu } from "@tiptap/react/menus";
-import clsx from "clsx";
 import type { LucideIcon } from "lucide-react";
 import {
   Bold,
@@ -14,6 +13,7 @@ import {
   Strikethrough,
   Underline as UnderlineIcon,
 } from "lucide-react";
+import { IconButton } from "@/components/ui/icon-button";
 import { popoverMotionOrigin } from "@/components/ui/use-anchored-popover";
 import { useLinkEditor } from "@/features/posts/editor/extensions/link-editing";
 import { m } from "@/paraglide/messages";
@@ -68,21 +68,9 @@ function MenuButton({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      aria-pressed={active}
-      title={label}
-      className={clsx(
-        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-        active
-          ? "bg-(--fuwari-btn-regular-bg) text-(--fuwari-primary)"
-          : "fuwari-text-50 hover:bg-(--fuwari-btn-regular-bg) hover:text-(--fuwari-primary)",
-      )}
-    >
+    <IconButton label={label} active={active} onClick={onClick}>
       <Icon size={14} strokeWidth={active ? 2.5 : 2} />
-    </button>
+    </IconButton>
   );
 }
 
