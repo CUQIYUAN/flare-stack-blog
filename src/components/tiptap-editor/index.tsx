@@ -23,6 +23,7 @@ import { FormulaModal } from "./ui/formula-modal";
 import { ImageModal } from "./ui/image-modal";
 import { LinkEditorPopover } from "./ui/link-editor-popover";
 import { LinkHoverCard } from "./ui/link-hover-card";
+import { SelectionBubbleMenu } from "./ui/selection-bubble-menu";
 import { TableBubbleMenu, TableMobileBar } from "./ui/table-bubble-menu";
 
 interface EditorProps {
@@ -199,6 +200,7 @@ export const Editor = memo(function Editor({
       {editable && <SlashMenuView editor={editor} />}
       {editable && <LinkEditorPopover editor={editor} />}
       {editable && <LinkHoverCard editor={editor} />}
+      {editable && <SelectionBubbleMenu editor={editor} />}
 
       <div
         id={scrollContainerId}
