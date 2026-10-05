@@ -33,6 +33,7 @@
     "auth:generate-schema": "bunx @better-auth/cli generate --yes --config auth-cli.ts --output src/lib/db/schema/auth.table.ts",
     "release": "export GITHUB_TOKEN=$(gh auth token) && release-it",
     "release:beta": "export GITHUB_TOKEN=$(gh auth token) && release-it --preRelease=beta",
+    "postinstall": "bun run i18n:compile && cf workers types",
     "prepare": "husky"
   },
   "dependencies": {
