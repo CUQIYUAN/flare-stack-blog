@@ -1,10 +1,7 @@
 import type { Editor } from "@tiptap/react";
 import { CornerDownLeft } from "lucide-react";
-import { useCallback, useRef, useSyncExternalStore } from "react";
-import {
-  getLinkEditor,
-  subscribeLinkEditor,
-} from "@/features/posts/editor/extensions/link-editing";
+import { useRef } from "react";
+import { useLinkEditor } from "@/features/posts/editor/extensions/link-editing";
 import { m } from "@/paraglide/messages";
 import { EditorPopover } from "./editor-popover";
 
@@ -14,16 +11,7 @@ import { EditorPopover } from "./editor-popover";
  * removes the link.
  */
 export function LinkEditorPopover({ editor }: { editor: Editor | null }) {
-  const subscribe = useCallback(
-    (listener: () => void) =>
-      editor ? subscribeLinkEditor(editor, listener) : () => {},
-    [editor],
-  );
-  const target = useSyncExternalStore(
-    subscribe,
-    () => (editor ? getLinkEditor(editor) : null),
-    () => null,
-  );
+  const target = useLinkEditor(editor);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const apply = () => {

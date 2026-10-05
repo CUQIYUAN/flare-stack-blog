@@ -1,13 +1,7 @@
 import type { Editor } from "@tiptap/react";
 import { CornerDownLeft, Loader2, Upload } from "lucide-react";
 import type { KeyboardEvent } from "react";
-import {
-  useCallback,
-  useId,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useId, useRef, useState } from "react";
 import { MediaPickerGrid } from "@/features/media/components/media-library/components";
 import {
   useMediaPicker,
@@ -15,7 +9,7 @@ import {
 } from "@/features/media/components/media-library/hooks";
 import type { MediaAsset } from "@/features/media/components/media-library/types";
 import { ACCEPTED_IMAGE_TYPES } from "@/features/media/media.schema";
-import { getImagePicker } from "@/features/posts/editor/extensions/image-placeholder";
+import { useImagePicker } from "@/features/posts/editor/extensions/image-placeholder";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
 import { EditorPopover } from "./editor-popover";
@@ -35,21 +29,7 @@ type Tab = (typeof TABS)[number]["id"];
  * placeholder.
  */
 export function ImagePickerPopover({ editor }: { editor: Editor | null }) {
-  const subscribe = useCallback(
-    (listener: () => void) => {
-      if (!editor) return () => {};
-      editor.on("transaction", listener);
-      return () => {
-        editor.off("transaction", listener);
-      };
-    },
-    [editor],
-  );
-  const target = useSyncExternalStore(
-    subscribe,
-    () => (editor ? getImagePicker(editor) : null),
-    () => null,
-  );
+  const target = useImagePicker(editor);
   const open = target !== null;
   const [tab, setTab] = useState<Tab>("upload");
   const tabRefs = useRef(new Map<Tab, HTMLButtonElement>());

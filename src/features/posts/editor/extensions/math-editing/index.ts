@@ -4,17 +4,17 @@ import { BlockMath, InlineMath } from "@tiptap/extension-mathematics";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
-import type { Mappable, Step } from "@tiptap/pm/transform";
+import type { Step } from "@tiptap/pm/transform";
 import { Transform } from "@tiptap/pm/transform";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import type { KatexOptions } from "katex";
 import { BlockMathView } from "./block-math-view";
-import type { MathEditingStorage, MathEditorState, MathType } from "./state";
-import { storageOf } from "./state";
+import type { MathType } from "./state";
+import { mathEditor, mathTypeOf, NODE_NAMES } from "./state";
 import { BLOCK_MATH_LINE, findInlineMathAtEnd } from "./syntax";
 
 export type { MathEditorState, MathType } from "./state";
-export { getMathEditor, subscribeMathEditor, useMathEditor } from "./state";
+export { getMathEditor, useMathEditor } from "./state";
 
 const KATEX_OPTIONS: KatexOptions = { throwOnError: false };
 
@@ -131,25 +131,6 @@ declare module "@tiptap/core" {
   }
 }
 
-// Transactions carry the editing state they open or close under this key.
-const META = "mathEditing";
-
-const NODE_NAMES: Record<MathType, string> = {
-  inline: "inlineMath",
-  block: "blockMath",
-};
-
-function mathTypeOf(node: PMNode | null | undefined): MathType | null {
-  if (node?.type.name === NODE_NAMES.inline) return "inline";
-  if (node?.type.name === NODE_NAMES.block) return "block";
-  return null;
-}
-
-function setState(storage: MathEditingStorage, state: MathEditorState | null) {
-  storage.state = state;
-  for (const listener of storage.listeners) listener();
-}
-
 /** Where `node` landed in the transaction's document. */
 function findNode(tr: Transaction, node: PMNode) {
   let found = -1;
@@ -167,17 +148,6 @@ function revertSteps(tr: Transaction, start: number) {
     steps.push(tr.steps[index].invert(tr.docs[index]));
   }
   return steps;
-}
-
-/** `steps` mapped through `mapping`; none once one of them no longer fits. */
-function mapSteps(steps: readonly Step[], mapping: Mappable) {
-  const mapped: Step[] = [];
-  for (const step of steps) {
-    const next = step.map(mapping);
-    if (!next) return [];
-    mapped.push(next);
-  }
-  return mapped;
 }
 
 /** Selects the formula at `pos`: the cursor after inline math, block math whole. */
@@ -204,10 +174,7 @@ function focusSoon(editor: Editor) {
  * opens it for editing, which the `Editor` component renders. Never opens in
  * a read-only editor.
  */
-export const MathEditing = Extension.create<
-  Record<string, never>,
-  MathEditingStorage
->({
+export const MathEditing = Extension.create({
   name: "mathEditing",
 
   addExtensions() {
@@ -217,8 +184,8 @@ export const MathEditing = Extension.create<
     ];
   },
 
-  addStorage() {
-    return { state: null, listeners: new Set() };
+  addProseMirrorPlugins() {
+    return [mathEditor.plugin()];
   },
 
   addCommands() {
@@ -226,9 +193,8 @@ export const MathEditing = Extension.create<
       insertMath:
         (type, latex) =>
         ({ editor, tr, dispatch }) => {
-          const storage = storageOf(editor);
           const nodeType = tr.doc.type.schema.nodes[NODE_NAMES[type]];
-          if (!editor.isEditable || !storage || !nodeType) return false;
+          if (!editor.isEditable || !nodeType) return false;
           if (!dispatch) return true;
 
           const start = tr.steps.length;
@@ -255,45 +221,40 @@ export const MathEditing = Extension.create<
           const pos = findNode(tr, node);
           if (pos < 0) return false;
           selectFormula(tr, pos);
-          tr.setMeta(META, {
-            state: {
-              pos,
-              type,
-              latex: text,
-              inserted: true,
-              revert: revertSteps(tr, start),
-            },
+          mathEditor.open(tr, {
+            pos,
+            type,
+            latex: text,
+            inserted: true,
+            revert: revertSteps(tr, start),
           });
           return true;
         },
       openMathEditor:
         (pos) =>
-        ({ editor, tr, dispatch }) => {
-          const storage = storageOf(editor);
+        ({ editor, state, tr, dispatch }) => {
           const node = tr.doc.nodeAt(pos);
           const type = mathTypeOf(node);
-          if (!editor.isEditable || !storage || !type) return false;
+          if (!editor.isEditable || !type) return false;
           // Clicking the open formula again keeps its editing as it is.
-          if (dispatch && storage.state?.pos !== pos) {
-            tr.setMeta(META, {
-              state: {
-                pos,
-                type,
-                latex: String(node?.attrs.latex ?? ""),
-                inserted: false,
-                revert: [],
-              },
+          if (dispatch && mathEditor.get(state)?.pos !== pos) {
+            mathEditor.open(tr, {
+              pos,
+              type,
+              latex: String(node?.attrs.latex ?? ""),
+              inserted: false,
+              revert: [],
             });
           }
           return true;
         },
       applyMath:
         (latex, type) =>
-        ({ editor, tr, dispatch }) => {
-          const open = storageOf(editor)?.state;
+        ({ editor, state, tr, dispatch }) => {
+          const open = mathEditor.get(state);
           if (!open) return false;
           if (!dispatch) return true;
-          tr.setMeta(META, { state: null });
+          mathEditor.close(tr);
 
           const node = tr.doc.nodeAt(open.pos);
           const nodeType = tr.doc.type.schema.nodes[NODE_NAMES[type]];
@@ -318,11 +279,11 @@ export const MathEditing = Extension.create<
         },
       closeMathEditor:
         () =>
-        ({ editor, tr, dispatch }) => {
-          const open = storageOf(editor)?.state;
+        ({ state, tr, dispatch }) => {
+          const open = mathEditor.get(state);
           if (!open) return false;
           if (!dispatch) return true;
-          tr.setMeta(META, { state: null });
+          mathEditor.close(tr);
           const node = tr.doc.nodeAt(open.pos);
           if (!open.inserted || !mathTypeOf(node)) return true;
           // Give back what the formula replaced, or else just remove it.
@@ -338,32 +299,5 @@ export const MathEditing = Extension.create<
           return true;
         },
     };
-  },
-
-  onTransaction({ transaction }) {
-    const storage = this.storage;
-    const meta = transaction.getMeta(META) as
-      | { state: MathEditorState | null }
-      | undefined;
-    if (meta) {
-      setState(storage, meta.state);
-      return;
-    }
-
-    const open = storage.state;
-    if (!open || !transaction.docChanged) return;
-    const mapped = transaction.mapping.mapResult(open.pos, 1);
-    if (
-      mapped.deletedAfter ||
-      !mathTypeOf(transaction.doc.nodeAt(mapped.pos))
-    ) {
-      setState(storage, null);
-    } else if (mapped.pos !== open.pos || open.revert.length > 0) {
-      setState(storage, {
-        ...open,
-        pos: mapped.pos,
-        revert: mapSteps(open.revert, transaction.mapping),
-      });
-    }
   },
 });

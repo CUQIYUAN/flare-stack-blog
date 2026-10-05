@@ -121,6 +121,25 @@ it("still links the selected text when a URL is pasted over it", () => {
   ]);
 });
 
+it("follows the text it links as the document changes and closes when it goes", () => {
+  const target = open("<p>see the docs</p>");
+  target.commands.setTextSelection({ from: 5, to: 13 });
+  target.commands.openLinkEditor();
+
+  target.commands.insertContentAt(1, "go ");
+  expect(getLinkEditor(target)).toMatchObject({ from: 8, to: 16 });
+  target.commands.applyLink("example.com");
+  expect(runs(target)).toEqual([
+    { text: "go see ", href: undefined },
+    { text: "the docs", href: "https://example.com" },
+  ]);
+
+  target.commands.setTextSelection({ from: 8, to: 16 });
+  target.commands.openLinkEditor();
+  target.commands.deleteRange({ from: 6, to: 17 });
+  expect(getLinkEditor(target)).toBeNull();
+});
+
 it("does not open in a read-only editor", () => {
   editor = createPostEditor({
     content: "<p>see the docs</p>",

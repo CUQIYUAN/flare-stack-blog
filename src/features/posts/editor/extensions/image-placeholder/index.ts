@@ -2,9 +2,10 @@ import type { Editor, JSONContent } from "@tiptap/core";
 import { mergeAttributes, Node } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import type { EditorState } from "@tiptap/pm/state";
-import { NodeSelection, Plugin, PluginKey } from "@tiptap/pm/state";
+import { NodeSelection } from "@tiptap/pm/state";
 import { Transform } from "@tiptap/pm/transform";
 import { ReactNodeViewRenderer } from "@tiptap/react";
+import { createInPlaceEditing, useInPlaceEditing } from "../in-place-editing";
 import { ImagePlaceholderView } from "./image-placeholder-view";
 
 export const IMAGE_PLACEHOLDER = "imagePlaceholder";
@@ -43,15 +44,23 @@ declare module "@tiptap/core" {
   }
 }
 
-const imagePickerKey = new PluginKey<ImagePickerState | null>("imagePicker");
-
 function isPlaceholderAt(doc: ProseMirrorNode, pos: number) {
   return doc.nodeAt(pos)?.type.name === IMAGE_PLACEHOLDER;
 }
 
+/** The open image picker, following its placeholder; closed once it is gone. */
+const imagePicker = createInPlaceEditing<ImagePickerState>(
+  "imagePicker",
+  (picker, tr) => {
+    const { pos, deleted } = tr.mapping.mapResult(picker.pos, 1);
+    if (deleted || !isPlaceholderAt(tr.doc, pos)) return null;
+    return pos === picker.pos ? picker : { pos };
+  },
+);
+
 /** The open picker's placeholder, with its current size. */
 function pickerTarget(state: EditorState) {
-  const picker = imagePickerKey.getState(state);
+  const picker = imagePicker.get(state);
   const node = picker ? state.doc.nodeAt(picker.pos) : null;
   if (!picker || node?.type.name !== IMAGE_PLACEHOLDER) return null;
   return { from: picker.pos, to: picker.pos + node.nodeSize };
@@ -102,26 +111,7 @@ export const ImagePlaceholder = Node.create({
   },
 
   addProseMirrorPlugins() {
-    return [
-      new Plugin<ImagePickerState | null>({
-        key: imagePickerKey,
-        state: {
-          init: () => null,
-          apply: (tr, picker) => {
-            const next = tr.getMeta(imagePickerKey) as
-              | ImagePickerState
-              | null
-              | undefined;
-            if (next !== undefined) return next;
-            if (!picker || !tr.docChanged) return picker;
-            // Follow the placeholder; close once it is gone.
-            const { pos, deleted } = tr.mapping.mapResult(picker.pos, 1);
-            if (deleted || !isPlaceholderAt(tr.doc, pos)) return null;
-            return pos === picker.pos ? picker : { pos };
-          },
-        },
-      }),
-    ];
+    return [imagePicker.plugin()];
   },
 
   addCommands() {
@@ -144,7 +134,7 @@ export const ImagePlaceholder = Node.create({
           );
           if (pos < 0) return false;
           tr.setSelection(NodeSelection.create(tr.doc, pos));
-          tr.setMeta(imagePickerKey, { pos });
+          imagePicker.open(tr, { pos });
           return true;
         },
       openImagePicker:
@@ -153,14 +143,14 @@ export const ImagePlaceholder = Node.create({
           if (!editor.isEditable || !isPlaceholderAt(state.doc, pos)) {
             return false;
           }
-          if (dispatch) tr.setMeta(imagePickerKey, { pos });
+          if (dispatch) imagePicker.open(tr, { pos });
           return true;
         },
       closeImagePicker:
         () =>
         ({ state, tr, dispatch }) => {
-          if (!imagePickerKey.getState(state)) return false;
-          if (dispatch) tr.setMeta(imagePickerKey, null);
+          if (!imagePicker.get(state)) return false;
+          if (dispatch) imagePicker.close(tr);
           return true;
         },
       fillImagePlaceholder:
@@ -176,7 +166,7 @@ export const ImagePlaceholder = Node.create({
           });
           tr.replaceWith(target.from, target.to, node);
           tr.setSelection(NodeSelection.create(tr.doc, target.from));
-          tr.setMeta(imagePickerKey, null);
+          imagePicker.close(tr);
           return true;
         },
       uploadImageToPlaceholder:
@@ -184,7 +174,7 @@ export const ImagePlaceholder = Node.create({
         ({ state, tr, commands }) => {
           const target = pickerTarget(state);
           if (!target) return false;
-          tr.setMeta(imagePickerKey, null);
+          imagePicker.close(tr);
           return commands.uploadImage(file, target);
         },
     };
@@ -193,7 +183,12 @@ export const ImagePlaceholder = Node.create({
 
 /** The open image picker, or `null` when it is closed. */
 export function getImagePicker(editor: Editor): ImagePickerState | null {
-  return imagePickerKey.getState(editor.state) ?? null;
+  return imagePicker.get(editor.state);
+}
+
+/** The open image picker, re-rendering as it opens, moves or closes. */
+export function useImagePicker(editor: Editor | null) {
+  return useInPlaceEditing(editor, imagePicker);
 }
 
 /**

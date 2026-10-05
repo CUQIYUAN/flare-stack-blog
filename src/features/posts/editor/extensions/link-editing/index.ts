@@ -1,7 +1,8 @@
 import type { Editor } from "@tiptap/core";
 import { Extension, getMarkRange } from "@tiptap/core";
-import type { EditorState } from "@tiptap/pm/state";
+import type { EditorState, Transaction } from "@tiptap/pm/state";
 import { normalizeLinkHref } from "@/lib/links/normalize-link-href";
+import { createInPlaceEditing, useInPlaceEditing } from "../in-place-editing";
 
 /** The open link input: the text it links and the link's current address. */
 export interface LinkEditorState {
@@ -12,16 +13,7 @@ export interface LinkEditorState {
   href: string;
 }
 
-interface LinkEditingStorage {
-  state: LinkEditorState | null;
-  listeners: Set<() => void>;
-}
-
 declare module "@tiptap/core" {
-  interface Storage {
-    linkEditing: LinkEditingStorage;
-  }
-
   interface Commands<ReturnType> {
     linkEditing: {
       /**
@@ -41,19 +33,30 @@ declare module "@tiptap/core" {
   }
 }
 
-function storageOf(editor: Editor): LinkEditingStorage | undefined {
-  return editor.storage.linkEditing as LinkEditingStorage | undefined;
+/** Moves the input's text through `tr`; closes once that text is gone. */
+function followTarget(
+  target: LinkEditorState,
+  tr: Transaction,
+): LinkEditorState | null {
+  const { from, to } = target;
+  if (from === to) {
+    const pos = tr.mapping.map(from);
+    return pos === from ? target : { ...target, from: pos, to: pos };
+  }
+  const next = { from: tr.mapping.map(from, 1), to: tr.mapping.map(to, -1) };
+  if (next.from >= next.to) return null;
+  return next.from === from && next.to === to ? target : { ...target, ...next };
 }
+
+const linkEditor = createInPlaceEditing("linkEditing", followTarget);
 
 /**
  * What the link input edits: the whole link when the selection lies inside
  * one, otherwise the selection itself.
  */
-function linkTarget(
-  state: Pick<EditorState, "selection" | "schema">,
-): LinkEditorState {
-  const { from, to, $from } = state.selection;
-  const type = state.schema.marks.link;
+function linkTarget(selection: EditorState["selection"]): LinkEditorState {
+  const { from, to, $from } = selection;
+  const type = $from.doc.type.schema.marks.link;
   const range = type ? getMarkRange($from, type) : undefined;
   if (range && range.from <= from && to <= range.to) {
     const mark = $from.doc
@@ -64,24 +67,16 @@ function linkTarget(
   return { from, to, href: "" };
 }
 
-function setState(storage: LinkEditingStorage, state: LinkEditorState | null) {
-  storage.state = state;
-  for (const listener of storage.listeners) listener();
-}
-
 /**
  * Edits links in place: Mod-k or the toolbar opens a link input beside the
  * selection, which the `Editor` component renders. Never opens in a
  * read-only editor.
  */
-export const LinkEditing = Extension.create<
-  Record<string, never>,
-  LinkEditingStorage
->({
+export const LinkEditing = Extension.create({
   name: "linkEditing",
 
-  addStorage() {
-    return { state: null, listeners: new Set() };
+  addProseMirrorPlugins() {
+    return [linkEditor.plugin()];
   },
 
   addKeyboardShortcuts() {
@@ -94,20 +89,18 @@ export const LinkEditing = Extension.create<
     return {
       openLinkEditor:
         () =>
-        ({ editor, state, dispatch }) => {
-          const storage = storageOf(editor);
-          if (!editor.isEditable || !storage) return false;
-          if (dispatch) setState(storage, linkTarget(state));
+        ({ editor, tr, dispatch }) => {
+          if (!editor.isEditable) return false;
+          if (dispatch) linkEditor.open(tr, linkTarget(tr.selection));
           return true;
         },
       applyLink:
         (url) =>
-        ({ editor, chain, dispatch }) => {
-          const storage = storageOf(editor);
-          const target = storage?.state;
-          if (!storage || !target) return false;
+        ({ state, tr, chain, dispatch }) => {
+          const target = linkEditor.get(state);
+          if (!target) return false;
           if (!dispatch) return true;
-          setState(storage, null);
+          linkEditor.close(tr);
           const text = url.trim();
           const href = normalizeLinkHref(text);
           const { from, to } = target;
@@ -132,10 +125,9 @@ export const LinkEditing = Extension.create<
         },
       closeLinkEditor:
         () =>
-        ({ editor, dispatch }) => {
-          const storage = storageOf(editor);
-          if (!storage?.state) return false;
-          if (dispatch) setState(storage, null);
+        ({ state, tr, dispatch }) => {
+          if (!linkEditor.get(state)) return false;
+          if (dispatch) linkEditor.close(tr);
           return true;
         },
     };
@@ -144,14 +136,10 @@ export const LinkEditing = Extension.create<
 
 /** The open link input, or `null` when it is closed. */
 export function getLinkEditor(editor: Editor): LinkEditorState | null {
-  return storageOf(editor)?.state ?? null;
+  return linkEditor.get(editor.state);
 }
 
-/** Calls `listener` whenever the link input opens, moves or closes. */
-export function subscribeLinkEditor(editor: Editor, listener: () => void) {
-  const storage = storageOf(editor);
-  storage?.listeners.add(listener);
-  return () => {
-    storage?.listeners.delete(listener);
-  };
+/** The open link input, re-rendering as it opens, moves or closes. */
+export function useLinkEditor(editor: Editor | null) {
+  return useInPlaceEditing(editor, linkEditor);
 }

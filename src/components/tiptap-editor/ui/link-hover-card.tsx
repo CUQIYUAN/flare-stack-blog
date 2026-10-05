@@ -1,17 +1,8 @@
 import type { Editor } from "@tiptap/react";
 import type { LucideIcon } from "lucide-react";
 import { ExternalLink, Pencil, Unlink } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import {
-  getLinkEditor,
-  subscribeLinkEditor,
-} from "@/features/posts/editor/extensions/link-editing";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLinkEditor } from "@/features/posts/editor/extensions/link-editing";
 import { m } from "@/paraglide/messages";
 import { EditorPopover } from "./editor-popover";
 
@@ -51,16 +42,7 @@ export function LinkHoverCard({ editor }: { editor: Editor | null }) {
   const [link, setLink] = useState<HTMLAnchorElement | null>(null);
   const timer = useRef<number | undefined>(undefined);
 
-  const subscribe = useCallback(
-    (listener: () => void) =>
-      editor ? subscribeLinkEditor(editor, listener) : () => {},
-    [editor],
-  );
-  const editingLink = useSyncExternalStore(
-    subscribe,
-    () => (editor ? getLinkEditor(editor) !== null : false),
-    () => false,
-  );
+  const editingLink = useLinkEditor(editor) !== null;
 
   const cancel = useCallback(() => window.clearTimeout(timer.current), []);
   const schedule = useCallback(

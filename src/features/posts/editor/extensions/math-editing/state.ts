@@ -1,6 +1,7 @@
 import type { Editor } from "@tiptap/core";
-import type { Step } from "@tiptap/pm/transform";
-import { useCallback, useSyncExternalStore } from "react";
+import type { Node as PMNode } from "@tiptap/pm/model";
+import type { Mappable, Step } from "@tiptap/pm/transform";
+import { createInPlaceEditing, useInPlaceEditing } from "../in-place-editing";
 
 export type MathType = "inline" | "block";
 
@@ -20,45 +21,51 @@ export interface MathEditorState {
   revert: readonly Step[];
 }
 
-export interface MathEditingStorage {
-  state: MathEditorState | null;
-  listeners: Set<() => void>;
+export const NODE_NAMES: Record<MathType, string> = {
+  inline: "inlineMath",
+  block: "blockMath",
+};
+
+export function mathTypeOf(node: PMNode | null | undefined): MathType | null {
+  if (node?.type.name === NODE_NAMES.inline) return "inline";
+  if (node?.type.name === NODE_NAMES.block) return "block";
+  return null;
 }
 
-declare module "@tiptap/core" {
-  interface Storage {
-    mathEditing: MathEditingStorage;
+/** `steps` mapped through `mapping`; none once one of them no longer fits. */
+function mapSteps(steps: readonly Step[], mapping: Mappable) {
+  const mapped: Step[] = [];
+  for (const step of steps) {
+    const next = step.map(mapping);
+    if (!next) return [];
+    mapped.push(next);
   }
+  return mapped;
 }
 
-export function storageOf(editor: Editor): MathEditingStorage | undefined {
-  return editor.storage.mathEditing as MathEditingStorage | undefined;
-}
+/** The formula open for editing, following it; closed once it is gone. */
+export const mathEditor = createInPlaceEditing<MathEditorState>(
+  "mathEditing",
+  (open, tr) => {
+    const mapped = tr.mapping.mapResult(open.pos, 1);
+    if (mapped.deletedAfter || !mathTypeOf(tr.doc.nodeAt(mapped.pos))) {
+      return null;
+    }
+    if (mapped.pos === open.pos && open.revert.length === 0) return open;
+    return {
+      ...open,
+      pos: mapped.pos,
+      revert: mapSteps(open.revert, tr.mapping),
+    };
+  },
+);
 
 /** The formula open for editing, or `null` when none is. */
 export function getMathEditor(editor: Editor): MathEditorState | null {
-  return storageOf(editor)?.state ?? null;
-}
-
-/** Calls `listener` whenever formula editing opens, moves or closes. */
-export function subscribeMathEditor(editor: Editor, listener: () => void) {
-  const storage = storageOf(editor);
-  storage?.listeners.add(listener);
-  return () => {
-    storage?.listeners.delete(listener);
-  };
+  return mathEditor.get(editor.state);
 }
 
 /** The formula open for editing, re-rendering as it opens, moves or closes. */
 export function useMathEditor(editor: Editor | null) {
-  const subscribe = useCallback(
-    (listener: () => void) =>
-      editor ? subscribeMathEditor(editor, listener) : () => {},
-    [editor],
-  );
-  return useSyncExternalStore(
-    subscribe,
-    () => (editor ? getMathEditor(editor) : null),
-    () => null,
-  );
+  return useInPlaceEditing(editor, mathEditor);
 }

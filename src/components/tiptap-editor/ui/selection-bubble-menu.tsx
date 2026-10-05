@@ -14,12 +14,8 @@ import {
   Strikethrough,
   Underline as UnderlineIcon,
 } from "lucide-react";
-import { useCallback, useSyncExternalStore } from "react";
 import { popoverMotionOrigin } from "@/components/ui/use-anchored-popover";
-import {
-  getLinkEditor,
-  subscribeLinkEditor,
-} from "@/features/posts/editor/extensions/link-editing";
+import { useLinkEditor } from "@/features/posts/editor/extensions/link-editing";
 import { m } from "@/paraglide/messages";
 
 /**
@@ -112,16 +108,7 @@ export function SelectionBubbleMenu({ editor }: { editor: Editor | null }) {
     }) ?? NO_FORMATS;
 
   // The link input takes the menu's place while it is open.
-  const subscribe = useCallback(
-    (listener: () => void) =>
-      editor ? subscribeLinkEditor(editor, listener) : () => {},
-    [editor],
-  );
-  const editingLink = useSyncExternalStore(
-    subscribe,
-    () => (editor ? getLinkEditor(editor) !== null : false),
-    () => false,
-  );
+  const editingLink = useLinkEditor(editor) !== null;
 
   // Mount the menu with the editor, not on the first transaction: registering
   // its plugin rebuilds every plugin view, which would close an open slash menu.
