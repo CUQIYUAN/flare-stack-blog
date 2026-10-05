@@ -8,6 +8,8 @@ import type {
 import { EditorContent, useEditor } from "@tiptap/react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { setSlashMenuModalOpener } from "@/features/posts/editor/extensions/slash-menu";
+import { SlashMenuView } from "@/features/posts/editor/extensions/slash-menu/slash-menu-view";
 import { normalizeLinkHref } from "@/lib/links/normalize-link-href";
 import { cn } from "@/lib/utils";
 import type { FormulaModalPayload } from "./formula-modal-store";
@@ -104,6 +106,15 @@ export const Editor = memo(function Editor({
     });
     setFormulaModalOpen(true);
   }, []);
+
+  // The slash menu's image and formula items open these modals for now.
+  useEffect(() => {
+    if (!editor || !editable) return;
+    return setSlashMenuModalOpener(editor, (modal) => {
+      if (modal === "image") openImageModal();
+      else openFormulaModal("block");
+    });
+  }, [editor, editable, openImageModal, openFormulaModal]);
 
   useEffect(() => {
     if (!editable) return;
@@ -209,6 +220,7 @@ export const Editor = memo(function Editor({
 
       {editable && <TableBubbleMenu editor={editor} />}
       {editable && <TableMobileBar editor={editor} />}
+      {editable && <SlashMenuView editor={editor} />}
 
       <div
         id={scrollContainerId}
