@@ -20,7 +20,7 @@ import {
 import EditorToolbar from "./ui/editor-toolbar";
 import type { FormulaMode } from "./ui/formula-modal";
 import { FormulaModal } from "./ui/formula-modal";
-import { ImageModal } from "./ui/image-modal";
+import { ImagePickerPopover } from "./ui/image-picker-popover";
 import { LinkEditorPopover } from "./ui/link-editor-popover";
 import { LinkHoverCard } from "./ui/link-hover-card";
 import { TableBubbleMenu, TableMobileBar } from "./ui/table-bubble-menu";
@@ -53,7 +53,6 @@ export const Editor = memo(function Editor({
   toolbarClassName,
 }: EditorProps) {
   const formulaOpenerKeyRef = useRef(Symbol("formula-modal-opener"));
-  const [imageModalOpen, setImageModalOpen] = useState(false);
   const [formulaModalOpen, setFormulaModalOpen] = useState(false);
   const [formulaPayload, setFormulaPayload] = useState<{
     mode: FormulaMode;
@@ -86,10 +85,6 @@ export const Editor = memo(function Editor({
     immediatelyRender: false,
   });
 
-  const openImageModal = useCallback(() => {
-    setImageModalOpen(true);
-  }, []);
-
   const openFormulaModal = useCallback((mode: FormulaMode) => {
     setFormulaPayload({
       mode,
@@ -99,14 +94,11 @@ export const Editor = memo(function Editor({
     setFormulaModalOpen(true);
   }, []);
 
-  // The slash menu's image and formula items open these modals for now.
+  // The slash menu's formula item opens the formula modal for now.
   useEffect(() => {
     if (!editor || !editable) return;
     return setSlashMenuModalOpener(editor, (modal) => {
       switch (modal) {
-        case "image":
-          openImageModal();
-          return;
         case "blockMath":
           openFormulaModal("block");
           return;
@@ -114,7 +106,7 @@ export const Editor = memo(function Editor({
           modal satisfies never;
       }
     });
-  }, [editor, editable, openImageModal, openFormulaModal]);
+  }, [editor, editable, openFormulaModal]);
 
   useEffect(() => {
     if (!editable) return;
@@ -188,7 +180,7 @@ export const Editor = memo(function Editor({
           editor={editor}
           className={toolbarClassName}
           onLinkClick={() => editor?.commands.openLinkEditor()}
-          onImageClick={openImageModal}
+          onImageClick={() => editor?.commands.insertImagePlaceholder()}
           onFormulaInlineClick={() => openFormulaModal("inline")}
           onFormulaBlockClick={() => openFormulaModal("block")}
         />
@@ -199,6 +191,7 @@ export const Editor = memo(function Editor({
       {editable && <SlashMenuView editor={editor} />}
       {editable && <LinkEditorPopover editor={editor} />}
       {editable && <LinkHoverCard editor={editor} />}
+      {editable && <ImagePickerPopover editor={editor} />}
 
       <div
         id={scrollContainerId}
@@ -209,17 +202,6 @@ export const Editor = memo(function Editor({
         {documentHeader}
         <EditorContent editor={editor} />
       </div>
-
-      {editable && (
-        <ImageModal
-          open={imageModalOpen}
-          returnFocus={() => editor?.view.dom ?? null}
-          onClose={() => setImageModalOpen(false)}
-          onSelect={(image) => {
-            editor?.chain().focus().setImage(image).run();
-          }}
-        />
-      )}
 
       {editable && (
         <FormulaModal

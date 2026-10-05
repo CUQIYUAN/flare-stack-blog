@@ -133,22 +133,28 @@ it("inserts a 3×3 table with a header row in place of an empty line", () => {
   ]);
 });
 
-it.each([
-  ["公式", "blockMath"],
-  ["image", "image"],
-] as const)(
-  "/%s removes the typed text and opens the %s modal",
-  (query, modal) => {
-    const target = open("<p>a</p><p></p>", 4);
-    const openModal = vi.fn();
-    setSlashMenuModalOpener(target, openModal);
-    typeText(target, `/${query}`);
-    pressKey(target, "Enter");
+it("/公式 removes the typed text and opens the blockMath modal", () => {
+  const target = open("<p>a</p><p></p>", 4);
+  const openModal = vi.fn();
+  setSlashMenuModalOpener(target, openModal);
+  typeText(target, "/公式");
+  pressKey(target, "Enter");
 
-    expect(openModal).toHaveBeenCalledExactlyOnceWith(modal);
-    expect(outline(target)).toEqual(['paragraph("a")', "paragraph"]);
-  },
-);
+  expect(openModal).toHaveBeenCalledExactlyOnceWith("blockMath");
+  expect(outline(target)).toEqual(['paragraph("a")', "paragraph"]);
+});
+
+it("inserts an image placeholder in place of the typed /图片", () => {
+  const target = open("<p>a</p><p></p>", 4);
+  typeText(target, "/图片");
+  pressKey(target, "Enter");
+
+  expect(outline(target)).toEqual([
+    'paragraph("a")',
+    "imagePlaceholder",
+    "paragraph",
+  ]);
+});
 
 it("moves the active item with the arrow keys, wrapping around", () => {
   const target = open("<p>Title</p>", 1);
