@@ -8,6 +8,7 @@ interface AdminNotificationEmailProps {
   commenterName: string;
   locale: Locale;
   postTitle: string;
+  siteTitle: string;
 }
 
 export const AdminNotificationEmail = ({
@@ -16,10 +17,12 @@ export const AdminNotificationEmail = ({
   commenterName,
   locale,
   postTitle,
+  siteTitle,
 }: AdminNotificationEmailProps) => {
   return (
     <EmailLayout
       locale={locale}
+      siteTitle={siteTitle}
       previewText={m.email_comment_admin_root_preview(
         { commenterName, postTitle },
         { locale },

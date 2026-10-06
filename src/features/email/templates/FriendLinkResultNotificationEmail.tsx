@@ -8,6 +8,7 @@ interface FriendLinkResultNotificationEmailProps {
   locale: Locale;
   rejectionReason?: string;
   siteName: string;
+  siteTitle: string;
 }
 
 export const FriendLinkResultNotificationEmail = ({
@@ -16,10 +17,12 @@ export const FriendLinkResultNotificationEmail = ({
   locale,
   rejectionReason,
   siteName,
+  siteTitle,
 }: FriendLinkResultNotificationEmailProps) => {
   return (
     <EmailLayout
       locale={locale}
+      siteTitle={siteTitle}
       previewText={
         approved
           ? m.email_friend_link_approved_preview({ siteName }, { locale })

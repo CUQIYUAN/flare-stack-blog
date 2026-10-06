@@ -1,17 +1,18 @@
 import type { ReactNode } from "react";
-import { blogConfig } from "@/blog.config";
 import type { Locale } from "@/lib/i18n";
 
 interface EmailLayoutProps {
   children: ReactNode;
   locale?: Locale;
   previewText?: string;
+  siteTitle: string;
 }
 
 export const EmailLayout = ({
   children,
   locale,
   previewText,
+  siteTitle,
 }: EmailLayoutProps) => {
   return (
     <div
@@ -60,7 +61,7 @@ export const EmailLayout = ({
                   letterSpacing: "-0.01em",
                 }}
               >
-                {blogConfig.title}
+                {siteTitle}
               </h2>
             </header>
 
@@ -83,7 +84,7 @@ export const EmailLayout = ({
                   textTransform: "uppercase",
                 }}
               >
-                &copy; {new Date().getUTCFullYear()} {blogConfig.title}.
+                &copy; {new Date().getUTCFullYear()} {siteTitle}.
               </p>
             </footer>
           </td>

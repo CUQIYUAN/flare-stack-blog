@@ -28,7 +28,7 @@ function getReplyNotificationUnsubscribe(url: string) {
 
 export function createEmailMessageFromNotification(
   event: NotificationEvent,
-  locale: Locale,
+  { locale, siteTitle }: { locale: Locale; siteTitle: string },
   delivery: NotificationDelivery,
 ): EmailMessage["data"] {
   switch (event.type) {
@@ -42,6 +42,7 @@ export function createEmailMessageFromNotification(
         html: renderToStaticMarkup(
           AdminNotificationEmail({
             locale,
+            siteTitle,
             postTitle: event.data.postTitle,
             commenterName: event.data.commenterName,
             commentPreview: event.data.commentPreview,
@@ -64,6 +65,7 @@ export function createEmailMessageFromNotification(
         html: renderToStaticMarkup(
           ReplyNotificationEmail({
             locale,
+            siteTitle,
             postTitle: event.data.postTitle,
             replierName: event.data.replierName,
             replyPreview: event.data.replyPreview,
@@ -92,6 +94,7 @@ export function createEmailMessageFromNotification(
         html: renderToStaticMarkup(
           FriendLinkAdminNotificationEmail({
             locale,
+            siteTitle,
             siteName: event.data.siteName,
             siteUrl: event.data.siteUrl,
             description: event.data.description,
@@ -110,6 +113,7 @@ export function createEmailMessageFromNotification(
         html: renderToStaticMarkup(
           FriendLinkResultNotificationEmail({
             locale,
+            siteTitle,
             siteName: event.data.siteName,
             approved: true,
             blogUrl: event.data.blogUrl,
@@ -126,6 +130,7 @@ export function createEmailMessageFromNotification(
         html: renderToStaticMarkup(
           FriendLinkResultNotificationEmail({
             locale,
+            siteTitle,
             siteName: event.data.siteName,
             approved: false,
             rejectionReason: event.data.rejectionReason,

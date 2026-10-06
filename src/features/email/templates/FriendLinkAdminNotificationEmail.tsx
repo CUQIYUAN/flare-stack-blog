@@ -7,6 +7,7 @@ interface FriendLinkAdminNotificationEmailProps {
   locale: Locale;
   reviewUrl: string;
   siteName: string;
+  siteTitle: string;
   siteUrl: string;
   submitterName: string;
 }
@@ -16,12 +17,14 @@ export const FriendLinkAdminNotificationEmail = ({
   locale,
   reviewUrl,
   siteName,
+  siteTitle,
   siteUrl,
   submitterName,
 }: FriendLinkAdminNotificationEmailProps) => {
   return (
     <EmailLayout
       locale={locale}
+      siteTitle={siteTitle}
       previewText={m.email_friend_link_submitted_preview(
         { submitterName, siteName },
         { locale },

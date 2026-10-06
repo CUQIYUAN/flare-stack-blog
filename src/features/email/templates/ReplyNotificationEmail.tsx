@@ -8,6 +8,7 @@ interface ReplyNotificationEmailProps {
   postTitle: string;
   replierName: string;
   replyPreview: string;
+  siteTitle: string;
   unsubscribeUrl: string;
 }
 
@@ -17,11 +18,13 @@ export const ReplyNotificationEmail = ({
   postTitle,
   replierName,
   replyPreview,
+  siteTitle,
   unsubscribeUrl,
 }: ReplyNotificationEmailProps) => {
   return (
     <EmailLayout
       locale={locale}
+      siteTitle={siteTitle}
       previewText={m.email_comment_reply_preview(
         { replierName, postTitle },
         { locale },
