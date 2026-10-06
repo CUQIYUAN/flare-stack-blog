@@ -120,6 +120,44 @@ describe("renderReact tables", () => {
     expect(html).not.toContain("style=");
   });
 
+  it("aligns header and body cells by their stored alignment", () => {
+    const aligned = (
+      type: "tableHeader" | "tableCell",
+      text: string,
+      align: string | null,
+    ): JSONContent => {
+      const base = cell(type, text, null);
+      return { ...base, attrs: { ...base.attrs, align } };
+    };
+    const html = render(
+      table([
+        [
+          aligned("tableHeader", "A", "center"),
+          aligned("tableHeader", "B", "right"),
+          aligned("tableHeader", "C", null),
+        ],
+        [
+          aligned("tableCell", "1", "center"),
+          aligned("tableCell", "2", "right"),
+          aligned("tableCell", "3", "left"),
+        ],
+      ]),
+    );
+
+    const shown = [...html.matchAll(/<(th|td)\b([^>]*)>/g)].map(
+      ([, tag, attrs]) =>
+        `${tag} ${/style="text-align:(\w+)"/.exec(attrs)?.[1] ?? "-"}`,
+    );
+    expect(shown).toEqual([
+      "th center",
+      "th right",
+      "th -",
+      "td center",
+      "td right",
+      "td left",
+    ]);
+  });
+
   it("renders inline and block math from the public schema", async () => {
     const { renderReactWithMath } = await import("./render-math");
     const html = renderToStaticMarkup(

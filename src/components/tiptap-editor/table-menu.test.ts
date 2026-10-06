@@ -158,6 +158,46 @@ it("offers merging on a multi-cell selection and splitting a merged cell", async
   expect(editor.state.doc.firstChild?.firstChild?.childCount).toBe(2);
 });
 
+it("aligns the selected column from the menu and shows its alignment", async () => {
+  const { editor } = await renderPostEditor({ content: TABLE });
+  cursorIn(editor, "b2");
+  const menu = await findMenu();
+  const buttons = menu
+    .getAllByRole("button")
+    .map((button) => button.getAttribute("aria-label") ?? button.textContent);
+  const center = () =>
+    menu.getByRole("button", { name: m.editor_table_align_center() });
+  const columnB = () =>
+    [0, 1].map(
+      (row) => editor.state.doc.firstChild?.child(row).child(1).attrs.align,
+    );
+
+  expect(buttons.indexOf(m.editor_table_align_left())).toBeGreaterThan(-1);
+  expect(buttons.indexOf(m.editor_table_align_right())).toBe(
+    buttons.indexOf(m.editor_table_align_left()) + 2,
+  );
+  expect(buttons.indexOf(m.editor_table_align_right())).toBeLessThan(
+    buttons.indexOf(m.editor_table_delete_table()),
+  );
+  expect(center().getAttribute("aria-pressed")).toBe("false");
+
+  act(() => {
+    fireEvent.click(center());
+  });
+  expect(columnB()).toEqual(["center", "center"]);
+  await waitFor(() =>
+    expect(center().getAttribute("aria-pressed")).toBe("true"),
+  );
+
+  act(() => {
+    fireEvent.click(center());
+  });
+  expect(columnB()).toEqual([null, null]);
+  await waitFor(() =>
+    expect(center().getAttribute("aria-pressed")).toBe("false"),
+  );
+});
+
 it("shows whether the header row is on", async () => {
   const { editor } = await renderPostEditor({ content: TABLE });
   cursorIn(editor, "b2");

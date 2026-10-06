@@ -7,6 +7,9 @@ import {
 import type { Editor } from "@tiptap/react";
 import type { LucideIcon } from "lucide-react";
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   ArrowDownToLine,
   ArrowLeftToLine,
   ArrowRightToLine,
@@ -19,6 +22,8 @@ import {
   TableCellsSplit,
   Trash2,
 } from "lucide-react";
+import type { ColumnAlign } from "@/features/posts/editor/extensions/table/column-align";
+import { columnAlignment } from "@/features/posts/editor/extensions/table/column-align";
 import { m } from "@/paraglide/messages";
 
 /** One thing the table menu can do to the table the selection is in. */
@@ -64,6 +69,20 @@ function headerRowOn(editor: Editor) {
 function headerColumnOn(editor: Editor) {
   const table = selectedTable(editor);
   return !!table && columnIsHeader(table.map, table.node, 0);
+}
+
+function alignAction(
+  align: ColumnAlign,
+  label: () => string,
+  icon: LucideIcon,
+): TableAction {
+  return {
+    id: `align-${align}`,
+    label,
+    icon,
+    run: (editor) => editor.chain().focus().toggleColumnAlign(align).run(),
+    active: (editor) => columnAlignment(editor.state) === align,
+  };
 }
 
 /** The table menu, in order. Add a group here to add it to every layout. */
@@ -152,6 +171,16 @@ export const TABLE_CONTROL_GROUPS: TableControlGroup[] = [
         run: (editor) => editor.chain().focus().splitCell().run(),
         available: (editor) => editor.can().splitCell(),
       },
+    ],
+  },
+  {
+    kind: "buttons",
+    id: "align",
+    iconOnly: true,
+    actions: [
+      alignAction("left", m.editor_table_align_left, AlignLeft),
+      alignAction("center", m.editor_table_align_center, AlignCenter),
+      alignAction("right", m.editor_table_align_right, AlignRight),
     ],
   },
   {

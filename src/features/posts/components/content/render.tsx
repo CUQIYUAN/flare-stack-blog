@@ -3,6 +3,7 @@ import { renderToReactElement } from "@tiptap/static-renderer/pm/react";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Children, lazy, type ReactNode, Suspense } from "react";
 import { schemaExtensions } from "@/features/posts/editor/schema";
+import { cellAlign } from "@/features/posts/editor/extensions/table/column-align";
 import { tableColumnLayout } from "@/features/posts/editor/extensions/table/column-widths";
 import { isMermaidLanguage } from "@/lib/code-languages";
 import { parseImageSize } from "@/features/posts/utils/normalize-content";
@@ -114,8 +115,13 @@ export function renderReact(
             colspan?: number;
             rowspan?: number;
           };
+          const align = cellAlign(node.attrs);
           return (
-            <td colSpan={attrs.colspan} rowSpan={attrs.rowspan}>
+            <td
+              colSpan={attrs.colspan}
+              rowSpan={attrs.rowspan}
+              style={align ? { textAlign: align } : undefined}
+            >
               {children}
             </td>
           );
@@ -125,8 +131,13 @@ export function renderReact(
             colspan?: number;
             rowspan?: number;
           };
+          const align = cellAlign(node.attrs);
           return (
-            <th colSpan={attrs.colspan} rowSpan={attrs.rowspan}>
+            <th
+              colSpan={attrs.colspan}
+              rowSpan={attrs.rowspan}
+              style={align ? { textAlign: align } : undefined}
+            >
               {children}
             </th>
           );

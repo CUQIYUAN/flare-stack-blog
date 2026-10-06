@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { JSONContent } from "@tiptap/core";
 import { Editor } from "@tiptap/core";
 import { Slice } from "@tiptap/pm/model";
 import { afterEach, expect, it, vi } from "vitest";
@@ -75,6 +76,22 @@ it("reports images with a local path", () => {
 
   paste(target, { "text/plain": "![a](./a.png)" });
   expect(onLocalImages).toHaveBeenCalledWith(1);
+});
+
+it("keeps the column alignment of a pasted table", () => {
+  const target = createEditor("<p></p>");
+
+  paste(target, {
+    "text/plain": "| A | B | C | D |\n|:--|:-:|--:|---|\n| 1 | 2 | 3 | 4 |",
+  });
+  const table = target.getJSON().content?.find((node) => node.type === "table");
+  const rows: Array<JSONContent> = table?.content ?? [];
+  expect(
+    rows.map((row) => row.content?.map((cell) => cell.attrs?.align)),
+  ).toEqual([
+    ["left", "center", "right", null],
+    ["left", "center", "right", null],
+  ]);
 });
 
 it("leaves pastes inside a code block to the default handler", () => {
