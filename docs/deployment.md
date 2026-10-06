@@ -2,6 +2,9 @@
 
 通过 **GitHub + Cloudflare Workers Builds**，在浏览器中完成博客部署，并使用自己的域名访问和管理博客。
 
+> [!TIP]
+> 更喜欢看视频？可以跟着 [B 站视频教程](https://www.bilibili.com/video/BV1iQHr6NEcC/) 一步步完成部署。
+
 ## 前置条件
 
 - 一个 GitHub 账号。
