@@ -16,6 +16,7 @@ export const POPOVER_PANEL_CLASS =
   "fuwari-popover-motion z-80 rounded-xl bg-(--fuwari-card-bg) shadow-md ring-1 ring-(--fuwari-input-border)";
 
 const GAP = 4;
+const VIEWPORT_MARGIN = 8;
 
 /**
  * Where a popover's open and close motion grows from: the anchor-side corner
@@ -32,7 +33,8 @@ export function popoverMotionOrigin(
 }
 
 /**
- * Anchors a fixed-position popover to its trigger's right edge, below it, or
+ * Anchors a fixed-position popover to its trigger's right edge (shifted right
+ * when that would push it past the viewport's left edge), below it, or
  * above it when there is less than `maxHeight` room below and more above. The
  * popover follows the trigger on resize and scroll, and `onDismiss` runs on a
  * mousedown outside both. Render the popover only while `style` is set: it
@@ -70,7 +72,11 @@ export function useAnchoredPopover({
       const openUp = spaceBelow < maxHeight && rect.top > spaceBelow;
       setStyle({
         position: "fixed",
-        right: window.innerWidth - rect.right,
+        // Right-aligned to the trigger, but never past the viewport's left.
+        right: Math.min(
+          window.innerWidth - rect.right,
+          window.innerWidth - width - VIEWPORT_MARGIN,
+        ),
         width,
         top: openUp ? undefined : rect.bottom + GAP,
         bottom: openUp ? window.innerHeight - rect.top + GAP : undefined,
