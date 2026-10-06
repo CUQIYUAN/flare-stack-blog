@@ -766,6 +766,7 @@
   "editor_toolbar_ordered_list": "Ordered List",
   "editor_toolbar_blockquote": "Blockquote",
   "editor_toolbar_table": "Insert Table",
+  "editor_toolbar_table_size": "{cols} columns × {rows} rows",
   "editor_toolbar_link": "Insert Link",
   "editor_toolbar_image": "Insert Image",
   "editor_toolbar_undo": "Undo",
