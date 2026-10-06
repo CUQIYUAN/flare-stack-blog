@@ -759,6 +759,7 @@
   "editor_toolbar_ordered_list": "有序列表",
   "editor_toolbar_blockquote": "引用",
   "editor_toolbar_table": "插入表格",
+  "editor_toolbar_table_size": "{cols} 列 × {rows} 行",
   "editor_toolbar_link": "插入链接",
   "editor_toolbar_image": "插入图片",
   "editor_toolbar_undo": "撤销",
