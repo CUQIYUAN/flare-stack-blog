@@ -167,7 +167,9 @@ function cleanup(confirmed: boolean, keep: ReadonlySet<number>) {
       .query("select name from sqlite_master where type = 'table'")
       .all() as Array<{ name: string }>
   ).map((row) => row.name);
-  const removed: Record<string, number> = {};
+  // Counts come from `select count(*)`: bun's `changes` also counts rows that
+  // foreign keys and triggers touch, so it overstates what was deleted.
+  const removed: Record<string, number | Array<number>> = {};
 
   db.transaction(() => {
     if (ids.length > 0) {
@@ -187,10 +189,7 @@ function cleanup(confirmed: boolean, keep: ReadonlySet<number>) {
         db.run(`delete from "${table}" where post_id in (${marks})`, ids);
         removed[table] = count;
       }
-      removed.posts = db.run(
-        `delete from posts where id in (${marks})`,
-        ids,
-      ).changes;
+      db.run(`delete from posts where id in (${marks})`, ids);
     }
     removed.session = db.run("delete from session where user_id = ?", [
       USER_ID,
@@ -200,7 +199,7 @@ function cleanup(confirmed: boolean, keep: ReadonlySet<number>) {
   db.close();
 
   rmSync(STATE_FILE);
-  console.log(JSON.stringify(removed));
+  console.log(JSON.stringify({ posts: ids, ...removed }));
 }
 
 const command = process.argv[2];
