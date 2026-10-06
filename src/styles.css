@@ -739,8 +739,13 @@
 .admin-layout .ProseMirror.resize-cursor {
   cursor: col-resize;
 }
+/* The highlight sits between the cell's background and its text, so selected
+   cells stay readable. */
+.admin-layout .ProseMirror .selectedCell {
+  isolation: isolate;
+}
 .admin-layout .ProseMirror .selectedCell::after {
-  z-index: 2;
+  z-index: -1;
   position: absolute;
   content: "";
   inset: 0;
