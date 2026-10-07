@@ -1084,6 +1084,7 @@
   "account_intro": "管理你的公开资料与账号偏好。",
   "account_back": "返回博客",
   "account_avatar_preview": "头像预览",
+  "account_avatar_pick_media": "从媒体库选择",
   "account_email": "登录邮箱",
   "account_save": "保存资料",
   "account_password_hint": "需要时可在此更新登录密码。",
