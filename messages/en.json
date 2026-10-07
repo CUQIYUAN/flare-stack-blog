@@ -1342,7 +1342,7 @@
   "settings_asset_validation_file_required": "Please select a file to upload",
   "settings_asset_validation_path_required": "Asset path is required",
   "settings_asset_validation_path_invalid": "Asset path must start with favicon/, social/, or themes/fuwari/",
-  "settings_asset_validation_file_too_large": "File size must be less than 2MB",
+  "settings_asset_validation_file_too_large": "File size must be less than {maxSizeMb}MB",
   "settings_asset_validation_file_invalid_type": "Only image files (JPEG, PNG, WebP, GIF, SVG, ICO) are supported",
   "settings_asset_upload_success": "Image uploaded successfully",
   "settings_asset_upload_fail": "Upload failed",

@@ -1334,7 +1334,7 @@
   "settings_asset_validation_file_required": "请选择要上传的文件",
   "settings_asset_validation_path_required": "资源路径不能为空",
   "settings_asset_validation_path_invalid": "资源路径必须以 favicon/、social/ 或 themes/fuwari/ 开头",
-  "settings_asset_validation_file_too_large": "文件大小不能超过 2MB",
+  "settings_asset_validation_file_too_large": "文件大小不能超过 {maxSizeMb}MB",
   "settings_asset_validation_file_invalid_type": "仅支持图片格式（JPEG、PNG、WebP、GIF、SVG、ICO）",
   "settings_asset_upload_success": "图片上传成功",
   "settings_asset_upload_fail": "上传失败",
