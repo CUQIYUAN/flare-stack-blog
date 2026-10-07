@@ -1,8 +1,13 @@
+import { renderToStaticMarkup } from "react-dom/server";
 import type { AuthType } from "worker-mailer";
+import { resolveSiteConfig } from "@/features/config/config.resolve";
+import * as ConfigRepo from "@/features/config/data/config.data";
 import * as ConfigService from "@/features/config/service/config.service";
 import * as EmailData from "@/features/email/data/email.data";
 import type { TestEmailConnectionInput } from "@/features/email/email.schema";
 import { verifyUnsubscribeToken } from "@/features/email/email.utils";
+import { emailSiteOf } from "@/features/email/templates/email-theme";
+import { TestEmail } from "@/features/email/templates/TestEmail";
 import type { EmailUnsubscribeType } from "@/lib/db/schema";
 import { isNotInProduction, serverEnv } from "@/lib/env/server.env";
 import { err, ok } from "@/lib/errors";
@@ -58,6 +63,9 @@ export async function testEmailConnection(
     const { LOCALE } = serverEnv(context.env);
     const { host, password, port, senderAddress, senderName, username } = data;
     const security = resolveTransportSecurity(port);
+    const site = emailSiteOf(
+      resolveSiteConfig(await ConfigRepo.getSystemConfig(context.db)),
+    );
 
     const { WorkerMailer } = await import("worker-mailer");
     await WorkerMailer.send(
@@ -78,7 +86,7 @@ export async function testEmailConnection(
         },
         to: context.session.user.email,
         subject: m.settings_email_test_mail_subject({}, { locale: LOCALE }),
-        html: `<p>${m.settings_email_test_mail_body({}, { locale: LOCALE })}</p>`,
+        html: renderToStaticMarkup(TestEmail({ locale: LOCALE, site })),
       },
     );
 
