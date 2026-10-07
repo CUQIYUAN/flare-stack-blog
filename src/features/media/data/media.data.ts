@@ -53,6 +53,7 @@ export async function updateMediaFile(
   db: DB,
   key: string,
   data: {
+    url: string;
     fileName: string;
     mimeType: string;
     sizeInBytes: number;
@@ -63,6 +64,7 @@ export async function updateMediaFile(
   const [updated] = await db
     .update(MediaTable)
     .set({
+      url: data.url,
       fileName: data.fileName,
       mimeType: data.mimeType,
       sizeInBytes: data.sizeInBytes,

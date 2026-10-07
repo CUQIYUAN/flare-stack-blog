@@ -464,6 +464,33 @@ describe("MediaService", () => {
       );
     });
 
+    it("gives a replaced file a new versioned URL and points drafts at it", async () => {
+      const media = unwrap(
+        await MediaService.upload(adminContext, {
+          file: new File(["old"], "banner.png", { type: "image/png" }),
+        }),
+      );
+      const { id: postId } = await PostService.createEmptyPost(adminContext);
+      await setPostContent(postId, imageDoc(media.key));
+      await publishPost(postId);
+
+      const replaced = unwrap(
+        await MediaService.replaceImage(adminContext, {
+          key: media.key,
+          file: new File(["new"], "banner.png", { type: "image/png" }),
+        }),
+      );
+
+      expect(replaced.url).toMatch(
+        new RegExp(`^/images/${media.key}\\?v=\\d+$`),
+      );
+      const post = await PostService.findPostById(adminContext, { id: postId });
+      expect(post?.contentJson?.content?.[0]?.attrs?.src).toBe(replaced.url);
+      expect(post?.publicSnapshotContentJson?.content?.[0]?.attrs?.src).toBe(
+        `/images/${media.key}`,
+      );
+    });
+
     it("imports a public image URL into Media", async () => {
       const bytes = new Uint8Array([1, 2, 3, 4]);
       vi.stubGlobal(
