@@ -1,10 +1,18 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import type { AuthType } from "worker-mailer";
-import { resolveSiteConfig } from "@/features/config/config.resolve";
+import {
+  resolveSiteConfig,
+  resolveSystemConfig,
+} from "@/features/config/config.resolve";
 import * as ConfigRepo from "@/features/config/data/config.data";
 import * as ConfigService from "@/features/config/service/config.service";
 import * as EmailData from "@/features/email/data/email.data";
-import type { TestEmailConnectionInput } from "@/features/email/email.schema";
+import * as kvStore from "@/features/cache/kv-store";
+import {
+  EmailTestRecordSchema,
+  type EmailTestStatus,
+  type TestEmailConnectionInput,
+} from "@/features/email/email.schema";
 import { verifyUnsubscribeToken } from "@/features/email/email.utils";
 import { emailSiteOf } from "@/features/email/templates/email-theme";
 import { TestEmail } from "@/features/email/templates/TestEmail";
@@ -55,6 +63,82 @@ export function isEmailConfigured(
   );
 }
 
+const EMAIL_TEST_RECORD_KEY = ["email", "last-test"] as const;
+
+/**
+ * Identifies a set of SMTP settings without storing the password: the same
+ * settings tested and later saved produce the same fingerprint.
+ */
+async function emailSettingsFingerprint(settings: TestEmailConnectionInput) {
+  const canonical = JSON.stringify([
+    settings.host.trim(),
+    settings.port,
+    settings.username.trim(),
+    settings.password,
+    settings.senderAddress.trim(),
+    settings.senderName?.trim() ?? "",
+  ]);
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(canonical),
+  );
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function recordEmailTest(
+  context: BaseContext,
+  settings: TestEmailConnectionInput,
+  error: string | null,
+) {
+  await kvStore.put(
+    context,
+    EMAIL_TEST_RECORD_KEY,
+    JSON.stringify({
+      fingerprint: await emailSettingsFingerprint(settings),
+      success: error === null,
+      testedAt: new Date().toISOString(),
+      error,
+    }),
+  );
+}
+
+function parseEmailTestRecord(stored: string | null) {
+  if (!stored) return null;
+  try {
+    const parsed = EmailTestRecordSchema.safeParse(JSON.parse(stored));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The last test result, if it was run against the settings saved now. */
+export async function getEmailTestStatus(
+  context: DbContext,
+): Promise<EmailTestStatus> {
+  const untested = { state: "untested", testedAt: null, error: null } as const;
+  const email = resolveSystemConfig(
+    await ConfigRepo.getSystemConfig(context.db),
+  ).email;
+  if (!isEmailConfigured(email)) return untested;
+
+  const record = parseEmailTestRecord(
+    await kvStore.get(context, EMAIL_TEST_RECORD_KEY),
+  );
+  if (!record) return untested;
+
+  if (record.fingerprint !== (await emailSettingsFingerprint(email))) {
+    return untested;
+  }
+  return {
+    state: record.success ? "verified" : "failed",
+    testedAt: record.testedAt,
+    error: record.error,
+  };
+}
+
 export async function testEmailConnection(
   context: AuthContext,
   data: TestEmailConnectionInput,
@@ -90,6 +174,7 @@ export async function testEmailConnection(
       },
     );
 
+    await recordEmailTest(context, data, null);
     return ok({ success: true });
   } catch (error) {
     const locale = serverEnv(context.env).LOCALE;
@@ -107,6 +192,7 @@ export async function testEmailConnection(
         error: errorMessage,
       }),
     );
+    await recordEmailTest(context, data, errorMessage);
     return err({ reason: "SEND_FAILED", message: errorMessage });
   }
 }

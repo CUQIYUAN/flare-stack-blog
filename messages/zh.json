@@ -866,6 +866,8 @@
   "settings_email_test_mail_subject": "测试连接",
   "settings_email_test_mail_body": "这是一封测试邮件。",
   "settings_email_unknown_error": "未知错误",
+  "settings_email_last_test_verified": "上次测试通过：{time}",
+  "settings_email_last_test_failed": "上次测试失败：{time}，{error}",
   "settings_webhook_toast_test_sent": "测试请求已发送",
   "settings_webhook_toast_test_fail": "测试请求发送失败",
   "settings_webhook_toast_test_fail_msg": "测试请求发送失败: {message}",
