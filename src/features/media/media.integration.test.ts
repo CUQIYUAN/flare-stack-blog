@@ -1,10 +1,13 @@
 import {
   createAdminTestContext,
+  createMockSession,
   seedUser,
   waitForBackgroundTasks,
 } from "tests/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { JSONContent } from "@tiptap/react";
+import { eq } from "drizzle-orm";
+import { user } from "@/lib/db/schema";
 import * as PostService from "@/features/posts/services/posts.service";
 import { unwrap } from "@/lib/errors";
 import * as Storage from "./data/media.storage";
@@ -541,6 +544,60 @@ describe("MediaService", () => {
       const list = await MediaService.getMediaList(adminContext, {});
       expect(list.items.some((item) => item.key === unused.key)).toBe(false);
       expect(list.items.some((item) => item.key === used.key)).toBe(true);
+    });
+  });
+
+  describe("Admin avatar references", () => {
+    async function setAvatar(userId: string, image: string) {
+      await adminContext.db
+        .update(user)
+        .set({ image })
+        .where(eq(user.id, userId));
+    }
+
+    it("keeps media an Admin uses as their avatar", async () => {
+      const avatar = unwrap(
+        await MediaService.upload(adminContext, {
+          file: new File(["a"], "admin-avatar.png", { type: "image/png" }),
+        }),
+      );
+      await setAvatar(
+        adminContext.session.user.id,
+        `https://blog.example${avatar.url}`,
+      );
+
+      const stats = await MediaService.getMediaStats(adminContext);
+      const unusedList = await MediaService.getMediaList(adminContext, {
+        unusedOnly: true,
+      });
+      expect(unusedList.items.some((item) => item.key === avatar.key)).toBe(
+        false,
+      );
+
+      unwrap(await MediaService.deleteUnused(adminContext));
+      const list = await MediaService.getMediaList(adminContext, {});
+      expect(list.items.some((item) => item.key === avatar.key)).toBe(true);
+      expect(stats.unusedCount).toBe(unusedList.items.length);
+
+      const deleted = await MediaService.deleteImage(adminContext, avatar.key);
+      expect(deleted.error?.reason).toBe("MEDIA_IN_USE");
+    });
+
+    it("does not protect media a reader points their avatar at", async () => {
+      const media = unwrap(
+        await MediaService.upload(adminContext, {
+          file: new File(["r"], "reader-avatar.png", { type: "image/png" }),
+        }),
+      );
+      const reader = createMockSession({
+        user: { id: "reader-1", email: "reader@example.com", role: null },
+      }).user;
+      await seedUser(adminContext.db, reader);
+      await setAvatar(reader.id, `https://blog.example${media.url}`);
+
+      unwrap(await MediaService.deleteUnused(adminContext));
+      const list = await MediaService.getMediaList(adminContext, {});
+      expect(list.items.some((item) => item.key === media.key)).toBe(false);
     });
   });
 });

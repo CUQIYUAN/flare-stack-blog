@@ -1091,6 +1091,7 @@
   "account_intro": "Manage your public profile and account preferences.",
   "account_back": "Back to blog",
   "account_avatar_preview": "Avatar preview",
+  "account_avatar_pick_media": "Choose from media library",
   "account_email": "Account email",
   "account_save": "Save profile",
   "account_password_hint": "Update your sign-in password here when needed.",

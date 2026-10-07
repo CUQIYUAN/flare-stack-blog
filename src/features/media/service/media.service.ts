@@ -75,7 +75,9 @@ export async function deleteImage(
   key: string,
 ) {
   // 后端兜底检查：防止删除正在被引用的媒体
-  const inUse = await PostMediaRepo.isMediaInUse(context.db, key);
+  const inUse =
+    (await PostMediaRepo.isMediaInUse(context.db, key)) ||
+    (await MediaRepo.isUsedAsAdminAvatar(context.db, key));
   if (inUse) {
     return err({ reason: "MEDIA_IN_USE" });
   }
