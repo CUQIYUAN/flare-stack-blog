@@ -873,6 +873,8 @@
   "settings_email_test_mail_subject": "Test Connection",
   "settings_email_test_mail_body": "This is a test email.",
   "settings_email_unknown_error": "Unknown error",
+  "settings_email_last_test_verified": "Last test passed: {time}",
+  "settings_email_last_test_failed": "Last test failed: {time}. {error}",
   "settings_webhook_toast_test_sent": "Test request sent",
   "settings_webhook_toast_test_fail": "Failed to send test request",
   "settings_webhook_toast_test_fail_msg": "Failed: {message}",

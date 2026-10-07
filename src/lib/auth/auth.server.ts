@@ -8,6 +8,10 @@ import { resolveSiteConfig } from "@/features/config/config.resolve";
 import * as ConfigRepo from "@/features/config/data/config.data";
 import { AuthEmail } from "@/features/email/templates/AuthEmail";
 import {
+  emailSiteOf,
+  type EmailSite,
+} from "@/features/email/templates/email-theme";
+import {
   inspectApiKeyManagementAccess,
   isApiKeyManagementPath,
 } from "@/lib/auth/api-key-guard";
@@ -30,8 +34,8 @@ async function checkEmailRateLimit(
   return result.allowed;
 }
 
-async function getSiteTitle(db: DB): Promise<string> {
-  return resolveSiteConfig(await ConfigRepo.getSystemConfig(db)).title;
+async function getEmailSite(db: DB): Promise<EmailSite> {
+  return emailSiteOf(resolveSiteConfig(await ConfigRepo.getSystemConfig(db)));
 }
 
 export function getAuth({ db, env }: { db: DB; env: Env }) {
@@ -105,7 +109,7 @@ export function getAuth({ db, env }: { db: DB; env: Env }) {
         const emailHtml = renderToStaticMarkup(
           AuthEmail({
             locale: LOCALE,
-            siteTitle: await getSiteTitle(db),
+            site: await getEmailSite(db),
             type: "reset-password",
             url,
           }),
@@ -130,7 +134,7 @@ export function getAuth({ db, env }: { db: DB; env: Env }) {
         const emailHtml = renderToStaticMarkup(
           AuthEmail({
             locale: LOCALE,
-            siteTitle: await getSiteTitle(db),
+            site: await getEmailSite(db),
             type: "verification",
             url,
           }),

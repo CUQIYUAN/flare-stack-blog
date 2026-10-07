@@ -3,6 +3,10 @@ import * as AuthData from "@/features/auth/data/auth.data";
 import { resolveSiteConfig } from "@/features/config/config.resolve";
 import * as ConfigService from "@/features/config/service/config.service";
 import { createEmailMessageFromNotification } from "@/features/email/service/email-message.mapper";
+import {
+  emailSiteOf,
+  type EmailSite,
+} from "@/features/email/templates/email-theme";
 import type {
   NotificationDelivery,
   NotificationEvent,
@@ -45,11 +49,11 @@ async function enqueueEmailNotification(
   context: DbContext,
   event: NotificationEvent,
   delivery: NotificationDelivery,
-  siteTitle: string,
+  site: EmailSite,
 ) {
   const emailMessage = createEmailMessageFromNotification(
     event,
-    { locale: serverEnv(context.env).LOCALE, siteTitle },
+    { locale: serverEnv(context.env).LOCALE, site },
     delivery,
   );
   await context.env.QUEUE.send({
@@ -87,14 +91,14 @@ export async function publishNotificationEvent(
     config?.notification?.admin?.channels?.email ?? true;
   const userEmailEnabled = config?.notification?.user?.emailEnabled ?? true;
   const webhookEndpoint = configuredWebhookEndpoint(config);
-  const siteTitle = resolveSiteConfig(config).title;
+  const site = emailSiteOf(resolveSiteConfig(config));
 
   if (isUserNotificationEvent(parsed)) {
     if (!userEmailEnabled || !delivery?.to) {
       return;
     }
 
-    await enqueueEmailNotification(context, parsed, delivery, siteTitle);
+    await enqueueEmailNotification(context, parsed, delivery, site);
     console.log(
       JSON.stringify({
         level: "info",
@@ -118,7 +122,7 @@ export async function publishNotificationEvent(
             context,
             parsed,
             { to, unsubscribeUrl: delivery?.unsubscribeUrl },
-            siteTitle,
+            site,
           ),
         );
         emailed = true;

@@ -7,6 +7,7 @@ import type {
   NotificationDelivery,
   NotificationEvent,
 } from "@/features/notification/notification.schema";
+import type { EmailSite } from "@/features/email/templates/email-theme";
 import type { Locale } from "@/lib/i18n";
 import type { EmailMessage } from "@/lib/queue/queue.schema";
 import { m } from "@/paraglide/messages";
@@ -28,7 +29,7 @@ function getReplyNotificationUnsubscribe(url: string) {
 
 export function createEmailMessageFromNotification(
   event: NotificationEvent,
-  { locale, siteTitle }: { locale: Locale; siteTitle: string },
+  { locale, site }: { locale: Locale; site: EmailSite },
   delivery: NotificationDelivery,
 ): EmailMessage["data"] {
   switch (event.type) {
@@ -42,7 +43,7 @@ export function createEmailMessageFromNotification(
         html: renderToStaticMarkup(
           AdminNotificationEmail({
             locale,
-            siteTitle,
+            site,
             postTitle: event.data.postTitle,
             commenterName: event.data.commenterName,
             commentPreview: event.data.commentPreview,
@@ -65,7 +66,7 @@ export function createEmailMessageFromNotification(
         html: renderToStaticMarkup(
           ReplyNotificationEmail({
             locale,
-            siteTitle,
+            site,
             postTitle: event.data.postTitle,
             replierName: event.data.replierName,
             replyPreview: event.data.replyPreview,
@@ -94,7 +95,7 @@ export function createEmailMessageFromNotification(
         html: renderToStaticMarkup(
           FriendLinkAdminNotificationEmail({
             locale,
-            siteTitle,
+            site,
             siteName: event.data.siteName,
             siteUrl: event.data.siteUrl,
             description: event.data.description,
@@ -113,7 +114,7 @@ export function createEmailMessageFromNotification(
         html: renderToStaticMarkup(
           FriendLinkResultNotificationEmail({
             locale,
-            siteTitle,
+            site,
             siteName: event.data.siteName,
             approved: true,
             blogUrl: event.data.blogUrl,
@@ -130,7 +131,7 @@ export function createEmailMessageFromNotification(
         html: renderToStaticMarkup(
           FriendLinkResultNotificationEmail({
             locale,
-            siteTitle,
+            site,
             siteName: event.data.siteName,
             approved: false,
             rejectionReason: event.data.rejectionReason,
