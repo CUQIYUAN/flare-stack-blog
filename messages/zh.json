@@ -628,6 +628,8 @@
   "editor_header_processing": "处理中...",
   "editor_header_success": "成功",
   "editor_header_unpublish": "下架",
+  "editor_unpublish_confirm_title": "下架文章",
+  "editor_unpublish_confirm_desc": "下架后公开页面会立即消失，文章变回草稿。重新发布即可恢复，链接和发布日期保持不变。",
   "editor_header_publish": "发布",
   "editor_status_draft": "草稿",
   "editor_status_published": "已发布",

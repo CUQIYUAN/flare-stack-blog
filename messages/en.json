@@ -635,6 +635,8 @@
   "editor_header_processing": "Processing...",
   "editor_header_success": "Success",
   "editor_header_unpublish": "Unpublish",
+  "editor_unpublish_confirm_title": "Unpublish post",
+  "editor_unpublish_confirm_desc": "The public page disappears immediately and the post becomes a draft. Publish it again to restore it with the same link and publication date.",
   "editor_header_publish": "Publish",
   "editor_status_draft": "Draft",
   "editor_status_published": "Published",
